@@ -2,41 +2,52 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="..\..\src\glslUtility.cpp" />
-    <ClCompile Include="..\..\src\image.cpp" />
-    <ClCompile Include="..\..\src\main.cpp" />
-    <ClCompile Include="..\..\src\scene.cpp" />
-    <ClCompile Include="..\..\src\utilities.cpp" />
     <ClCompile Include="..\..\src\stb_image\stb_image.c">
       <Filter>stb_image</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\stb_image\stb_image_write.c">
       <Filter>stb_image</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src_lin\main.cpp" />
+    <ClCompile Include="..\..\src_lin\raytracer.cpp" />
+    <ClCompile Include="..\..\src_lin\cudaRaytracer.cpp" />
+    <ClCompile Include="..\..\src_lin\sphere.cpp" />
+    <ClCompile Include="..\..\src_lin\triangle.cpp" />
+    <ClCompile Include="..\..\src_lin\ColorImage.cpp" />
+    <ClCompile Include="..\..\src_lin\sceneDesc.cpp" />
+    <ClCompile Include="..\..\src_lin\light.cpp" />
+    <ClCompile Include="..\..\src_lin\fileParser.cpp" />
+    <ClCompile Include="..\..\src_lin\transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\cudaMat4.h" />
     <ClInclude Include="..\..\src\glslUtility.h" />
-    <ClInclude Include="..\..\src\image.h" />
-    <ClInclude Include="..\..\src\interactions.h" />
-    <ClInclude Include="..\..\src\intersections.h" />
-    <ClInclude Include="..\..\src\main.h" />
-    <ClInclude Include="..\..\src\raytraceKernel.h" />
-    <ClInclude Include="..\..\src\scene.h" />
-    <ClInclude Include="..\..\src\sceneStructs.h" />
-    <ClInclude Include="..\..\src\utilities.h" />
     <ClInclude Include="..\..\src\stb_image\stb_image_write.h">
       <Filter>stb_image</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\stb_image\stb_image.h">
       <Filter>stb_image</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="..\..\src\raytraceKernel.cu" />
+    <ClInclude Include="..\..\src_lin\raytracer.h" />
+    <ClInclude Include="..\..\src_lin\cudaRaytracer.h" />
+    <ClInclude Include="..\..\src_lin\constant.h" />
+    <ClInclude Include="..\..\src_lin\shape.h" />
+    <ClInclude Include="..\..\src_lin\sphere.h" />
+    <ClInclude Include="..\..\src_lin\triangle.h" />
+    <ClInclude Include="..\..\src_lin\ColorImage.h" />
+    <ClInclude Include="..\..\src_lin\sceneDesc.h" />
+    <ClInclude Include="..\..\src_lin\light.h" />
+    <ClInclude Include="..\..\src_lin\cudaRaytracerKernel.h" />
+    <ClInclude Include="..\..\src_lin\util.h" />
+    <ClInclude Include="..\..\src_lin\fileParser.h" />
+    <ClInclude Include="..\..\src_lin\transform.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="stb_image">
       <UniqueIdentifier>{011aa553-95e8-4e59-b7ff-1bb89aebe21d}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\..\src_lin\cudaRaytracerKernel.cu" />
   </ItemGroup>
 </Project>

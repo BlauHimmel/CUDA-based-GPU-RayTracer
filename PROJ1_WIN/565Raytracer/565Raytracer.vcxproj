@@ -21,28 +21,39 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\cudaMat4.h" />
     <ClInclude Include="..\..\src\glslUtility.h" />
-    <ClInclude Include="..\..\src\image.h" />
-    <ClInclude Include="..\..\src\interactions.h" />
-    <ClInclude Include="..\..\src\intersections.h" />
-    <ClInclude Include="..\..\src\main.h" />
-    <ClInclude Include="..\..\src\raytraceKernel.h" />
-    <ClInclude Include="..\..\src\scene.h" />
-    <ClInclude Include="..\..\src\sceneStructs.h" />
     <ClInclude Include="..\..\src\stb_image\stb_image.h" />
     <ClInclude Include="..\..\src\stb_image\stb_image_write.h" />
-    <ClInclude Include="..\..\src\utilities.h" />
+    <ClInclude Include="..\..\src_lin\ColorImage.h" />
+    <ClInclude Include="..\..\src_lin\constant.h" />
+    <ClInclude Include="..\..\src_lin\cudaRaytracer.h" />
+    <ClInclude Include="..\..\src_lin\cudaRaytracerKernel.h" />
+    <ClInclude Include="..\..\src_lin\fileParser.h" />
+    <ClInclude Include="..\..\src_lin\light.h" />
+    <ClInclude Include="..\..\src_lin\raytracer.h" />
+    <ClInclude Include="..\..\src_lin\sceneDesc.h" />
+    <ClInclude Include="..\..\src_lin\shape.h" />
+    <ClInclude Include="..\..\src_lin\sphere.h" />
+    <ClInclude Include="..\..\src_lin\transform.h" />
+    <ClInclude Include="..\..\src_lin\triangle.h" />
+    <ClInclude Include="..\..\src_lin\util.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\glslUtility.cpp" />
-    <ClCompile Include="..\..\src\image.cpp" />
-    <ClCompile Include="..\..\src\main.cpp" />
-    <ClCompile Include="..\..\src\scene.cpp" />
     <ClCompile Include="..\..\src\stb_image\stb_image.c" />
     <ClCompile Include="..\..\src\stb_image\stb_image_write.c" />
-    <ClCompile Include="..\..\src\utilities.cpp" />
+    <ClCompile Include="..\..\src_lin\ColorImage.cpp" />
+    <ClCompile Include="..\..\src_lin\cudaRaytracer.cpp" />
+    <ClCompile Include="..\..\src_lin\fileParser.cpp" />
+    <ClCompile Include="..\..\src_lin\light.cpp" />
+    <ClCompile Include="..\..\src_lin\main.cpp" />
+    <ClCompile Include="..\..\src_lin\raytracer.cpp" />
+    <ClCompile Include="..\..\src_lin\sceneDesc.cpp" />
+    <ClCompile Include="..\..\src_lin\sphere.cpp" />
+    <ClCompile Include="..\..\src_lin\transform.cpp" />
+    <ClCompile Include="..\..\src_lin\triangle.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="..\..\src\raytraceKernel.cu" />
+    <CudaCompile Include="..\..\src_lin\cudaRaytracerKernel.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FF21CA49-522E-4E86-B508-EE515B248FC4}</ProjectGuid>
@@ -113,12 +124,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\include;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v5.5\common\inc;..\shared\glew\include;..\shared\freeglut\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\Penn course\CIS565 GPU programming\glew-1.10.0-win32\glew-1.10.0\include;E:\Penn course\CIS565 GPU programming\freeglut-2.8.1\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\include;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v5.5\common\inc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../shared/glew/lib;../shared/freeglut/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>E:\Penn course\CIS565 GPU programming\glew-1.10.0-win32\glew-1.10.0\lib\Release\Win32;E:\Penn course\CIS565 GPU programming\freeglut-2.8.1\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>cudart.lib; glew32.lib;glu32.lib;opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
       <IgnoreSpecificDefaultLibraries>
