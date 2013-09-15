@@ -1,16 +1,16 @@
 #pragma once
-
+#define GLM_SWIZZLE
 #include <iostream>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include "glm\glm.hpp"
 
-#define FLOAT_INF 0x7f800000
+#define FLOAT_INF 0x7F800000
 
 #define cudaErrorCheck( errNo ) checkError( (errNo), __FILE__, __LINE__ )
 
-void checkError( cudaError_t err, const char* const filename, const int line  )
+inline void checkError( cudaError_t err, const char* const filename, const int line  )
 {
     if( err != cudaSuccess )
     {
@@ -20,8 +20,31 @@ void checkError( cudaError_t err, const char* const filename, const int line  )
     }
 }
 
-typedef struct _Triangle
+//typedef struct _Triangle
+//{  
+//    glm::mat4 transform;
+//    glm::mat4 invTrans;
+//
+//    //temporary
+//    glm::vec3 diffuse;
+//    glm::vec3 specular;
+//    glm::vec3 emission;
+//    glm::vec3 ambient;
+//    float shininess;
+//
+//    //unsigned short material_id;
+//
+//} _Triangle;
+
+typedef struct _Primitive
 {
+    int type;
+
+    //used for sphere type
+    glm::vec3 center;
+    float radius;
+
+    //used for triangle type
     glm::vec3 vert[3];
     glm::vec3 normal[3];
     glm::vec3 pn; //plane normal used when vertex normal not specified
@@ -29,24 +52,23 @@ typedef struct _Triangle
     glm::mat4 transform;
     glm::mat4 invTrans;
 
-    unsigned short material_id;
+    //temporary
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+    glm::vec3 emission;
+    glm::vec3 ambient;
+    float shininess;
 
-} _Triangle;
-
-typedef struct _Sphere
-{
-    glm::vec3 center;
-    float radius;
-
-    glm::mat4 transform;
-    glm::mat4 invTrans;
-
-    unsigned short material_id;
-}_Sphere;
+    //unsigned short material_id;
+}_Primitive;
 
 typedef struct _Light
 {
     glm::vec4 pos;
+    glm::vec3 color;
+    float attenu_const;
+    float attenu_linear;
+    float attenu_quadratic;
 
 }_Light;
 

@@ -33,6 +33,7 @@
     <ClInclude Include="..\..\src_lin\sceneDesc.h" />
     <ClInclude Include="..\..\src_lin\shape.h" />
     <ClInclude Include="..\..\src_lin\sphere.h" />
+    <ClInclude Include="..\..\src_lin\timer.h" />
     <ClInclude Include="..\..\src_lin\transform.h" />
     <ClInclude Include="..\..\src_lin\triangle.h" />
     <ClInclude Include="..\..\src_lin\util.h" />
@@ -139,6 +140,8 @@
       <CompileOut>$(ProjectDir)$(Platform)/$(Configuration)/%(Filename)%(Extension).obj</CompileOut>
       <Include>
       </Include>
+      <CodeGeneration>compute_30,sm_30;compute_35,sm_35;compute_35,compute_35</CodeGeneration>
+      <GenerateLineInfo>true</GenerateLineInfo>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug (v5.5)|Win32'">
@@ -162,6 +165,9 @@
     <CudaCompile>
       <CompileOut>$(ProjectDir)$(Platform)/$(Configuration)/%(Filename)%(Extension).obj</CompileOut>
       <Include>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\include;C:/ProgramData/NVIDIA Corporation/CUDA Samples/v5.5/common/inc;../shared/glew/includes;../shared/freeglut/includes</Include>
+      <CodeGeneration>compute_30,sm_30;compute_35,sm_35;compute_35,compute_35</CodeGeneration>
+      <GPUDebugInfo>true</GPUDebugInfo>
+      <GenerateLineInfo>true</GenerateLineInfo>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -212,6 +218,7 @@
     <CudaCompile>
       <CompileOut>$(ProjectDir)$(Platform)/$(Configuration)/%(Filename)%(Extension).obj</CompileOut>
       <Include>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v5.5\include;C:/ProgramData/NVIDIA Corporation/CUDA Samples/v5.5/common/inc;../shared/glew/includes;../shared/freeglut/includes</Include>
+      <CodeGeneration>compute_30,sm_30;compute_35,sm_35;compute_35,compute_35</CodeGeneration>
     </CudaCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

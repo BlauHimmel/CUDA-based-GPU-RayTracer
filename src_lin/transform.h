@@ -1,4 +1,6 @@
 #pragma once
+
+#define GLM_SWIZZLE
 // Transform header file to define the interface. 
 // The class is all static for simplicity
 // You need to implement left, up and lookAt

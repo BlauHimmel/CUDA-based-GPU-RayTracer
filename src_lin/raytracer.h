@@ -6,6 +6,8 @@
 class RayTracer
 {
 public: 
+    RayTracer(){}
+    virtual ~RayTracer(){}
     virtual void renderImage( const SceneDesc &scene, ColorImage &img ){};
 
 };

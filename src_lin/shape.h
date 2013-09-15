@@ -1,6 +1,9 @@
 #pragma once
 #define GLM_SWIZZLE
+
+#include<string>
 #include "glm/glm.hpp"
+
 
 class Shape
 {
@@ -14,7 +17,7 @@ public:
 
     virtual glm::vec3 getNormalInPoint( const glm::vec3 &point ) const = 0;
 
-    virtual std::string toString()const{}
+    virtual std::string toString()const{ return "";}
 
     glm::mat4 transform;
     glm::mat4 invTrans;

@@ -1,4 +1,5 @@
 #pragma once
+#define GLM_SWIZZLE
 
 #include "shape.h"
 #include "sphere.h"
@@ -12,6 +13,7 @@ class SceneDesc
 {
 public:
     SceneDesc(void);
+    SceneDesc( int w, int h ){ width = w; height = h;}
     ~SceneDesc(void);
 
 public:

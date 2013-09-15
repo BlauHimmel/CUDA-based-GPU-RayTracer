@@ -41,6 +41,7 @@
     <ClInclude Include="..\..\src_lin\util.h" />
     <ClInclude Include="..\..\src_lin\fileParser.h" />
     <ClInclude Include="..\..\src_lin\transform.h" />
+    <ClInclude Include="..\..\src_lin\timer.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="stb_image">
