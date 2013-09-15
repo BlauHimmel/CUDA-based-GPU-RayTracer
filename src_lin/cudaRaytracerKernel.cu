@@ -230,6 +230,8 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
     glm::vec3 shiftP;
     glm::vec3 surfaceNormal;
     glm::vec3 color(0.0f,0.0f,0.0f);
+    glm::vec3 finalColor(0.0f,0.0f,0.0f);
+    glm::vec3 cumulativeSpecular( 1.0f, 1.0f, 1.0f );
     int hitId;
     int shadowPct;
    
@@ -251,28 +253,35 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
     ray = glm::normalize( ray );
     raysource = cameraData.eyePos;
 
-    hitId = raytrace( &ray,&raysource, primitives, primitiveNum, lights, lightNum, &incidentP, &surfaceNormal );
-    if( hitId >= 0 )
+    for( int depth = 0; depth < 5; ++depth )
     {
-        shiftP = incidentP +  (0.001f * surfaceNormal);
-        for( int i = 0; i < lightNum; ++i )
+        color.x = color.y = color.z = 0.0f; //clear color vector for use in current iteration
+        hitId = raytrace( &ray,&raysource, primitives, primitiveNum, lights, lightNum, &incidentP, &surfaceNormal );
+        if( hitId >= 0 )
         {
-            shadowPct = shadowTest( &shiftP, &surfaceNormal, primitives, primitiveNum, lights+i );
+            shiftP = incidentP +  (0.001f * surfaceNormal);
+            for( int i = 0; i < lightNum; ++i )
+            {
+                shadowPct = shadowTest( &shiftP, &surfaceNormal, primitives, primitiveNum, lights+i );
 
-            //sahding
-            if( shadowPct ==0 )
-              color += shade( &incidentP, &surfaceNormal, &ray, &primitives[hitId], 0, lights+i );
+                //sahding
+                if( shadowPct ==0 )
+                  color += shade( &incidentP, &surfaceNormal, &ray, &primitives[hitId], 0, lights+i );
+            }
+            color += primitives[hitId].ambient + primitives[hitId].emission;
+    
+        
         }
-        color += primitives[hitId].ambient + primitives[hitId].emission;
-        
-        //reflective ray generate
-        
+        finalColor += color * cumulativeSpecular;
 
+        ray = glm::normalize( glm::reflect( ray, surfaceNormal ) );
+        raysource = shiftP;
+        cumulativeSpecular *= primitives[hitId].specular;
     }
     //write color to output buffer
-    outputImage[ outIdx ] = color.x > 1 ? 255 : color.x * 255;
-    outputImage[ outIdx + 1] = color.y > 1 ? 255 : color.y * 255;
-    outputImage[ outIdx + 2] = color.z > 1 ? 255 : color.z * 255 ;
+    outputImage[ outIdx ] = finalColor.x > 1 ? 255 : finalColor.x * 255;
+    outputImage[ outIdx + 1] = finalColor.y > 1 ? 255 : finalColor.y * 255;
+    outputImage[ outIdx + 2] = finalColor.z > 1 ? 255 : finalColor.z * 255 ;
 
 }
 

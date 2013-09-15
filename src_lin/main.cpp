@@ -41,12 +41,12 @@ int main( int argc, char* argv[] )
     SceneDesc theScene(INIT_WIN_WIDTH,INIT_WIN_HEIGHT);
     ColorImage outputImage;
 
-    FileParser::parse( IOFILES[3][0], theScene );
+    FileParser::parse( IOFILES[1][0], theScene );
     outputImage.init( theScene.width, theScene.height );
     
     cudaRayTracer->renderImage( theScene, outputImage );
 
-    outputImage.outputPPM( IOFILES[3][1] );
+    outputImage.outputPPM( IOFILES[1][1] );
 
     return 0;
 }
