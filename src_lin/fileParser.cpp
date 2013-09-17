@@ -160,9 +160,15 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                 Light light;
                 light.pos = vec4( param[0], param[1], param[2], 1 );
                 
-                if( itemName != "point" )
+
+                if( itemName == "directional" )
+                {
                     light.pos[3] = 0;
-             
+                    light.type = 1;
+                }
+                else
+                    light.type = 0;
+
                 light.pos = transtack.back() * light.pos ;
                 light.color = vec3( param[3], param[4], param[5] );
 
@@ -171,6 +177,28 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                 light.attenu_quadratic = attenu_quadratic;
 
                 sceneDesc.lights.push_back( light );
+            }
+        }
+        else if(  itemName == "area"  ) //area light
+        {
+            if( readvals( lineSStr, 10, param ) )
+            {
+                Light light;
+                light.type = 2;
+                light.pos = vec4( param[0], param[1], param[2], 1 );
+                light.pos = transtack.back() * light.pos;
+
+                light.width = param[3];
+                light.normal = vec3( param[4], param[5], param[6] );
+                light.normal = mat3( transpose( inverse( transtack.back() ) ) ) * light.normal;
+
+                light.color = vec3( param[7], param[8], param[9] );
+
+                light.attenu_const = attenu_const;
+                light.attenu_linear = attenu_linear;
+                light.attenu_quadratic = attenu_quadratic;
+                sceneDesc.lights.push_back( light );
+
             }
         }
         else if( itemName == "ambient" )

@@ -66,9 +66,14 @@ typedef struct _Light
 {
     glm::vec4 pos;
     glm::vec3 color;
+    glm::vec3 normal;   //for area light
     float attenu_const;
     float attenu_linear;
     float attenu_quadratic;
+    float cutoff;  
+    unsigned short type; 
+    float width; //for area light
+
 
 }_Light;
 

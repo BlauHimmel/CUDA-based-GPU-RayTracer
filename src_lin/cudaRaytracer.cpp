@@ -92,7 +92,7 @@ void CudaRayTracer::packSceneDescData( const SceneDesc &sceneDesc )
 
     //packing the primitives
     numPrimitive = sceneDesc.primitives.size();
-    h_pPrimitives = new _Primitive[ numPrimitive ];
+    h_pPrimitives = new _Primitive[ numPrimitive ]; 
 
     for( int i = 0; i < sceneDesc.primitives.size(); ++i )
     {
@@ -132,6 +132,10 @@ void CudaRayTracer::packSceneDescData( const SceneDesc &sceneDesc )
         h_pLights[i].attenu_linear = sceneDesc.lights[i].attenu_linear;
         h_pLights[i].attenu_const = sceneDesc.lights[i].attenu_const;
         h_pLights[i].attenu_quadratic = sceneDesc.lights[i].attenu_quadratic;
+
+        h_pLights[i].type = sceneDesc.lights[i].type;
+        h_pLights[i].normal = sceneDesc.lights[i].normal;
+        h_pLights[i].width = sceneDesc.lights[i].width;
     }
 }
 

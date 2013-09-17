@@ -79,9 +79,10 @@ __device__ glm::vec3 shade( glm::vec3* point, glm::vec3* normal, glm::vec3* eyeR
     if( light->pos[3] > 0 ) //local light
     {
         L = glm::normalize( glm::vec3(light->pos) - (*point) );
-        lightDst = glm::distance( (*point), glm::vec3(light->pos));
-        attenu = light->attenu_const + 
-                    ( light->attenu_linear + light->attenu_quadratic * lightDst ) * lightDst;
+        //lightDst = glm::distance( (*point), glm::vec3(light->pos));
+        lightDst = glm::length( L );
+        //attenu = light->attenu_const + 
+        //            ( light->attenu_linear + light->attenu_quadratic * lightDst ) * lightDst;
     }
     else
     {
@@ -93,7 +94,7 @@ __device__ glm::vec3 shade( glm::vec3* point, glm::vec3* normal, glm::vec3* eyeR
         return color;
 
     H = glm::normalize( L - *eyeRay );
-    color = light->color  / attenu *
+    color = light->color   *
                 ( primitive->diffuse * fmaxf( glm::dot( *normal, L ), 0.0f ) +
                 primitive->specular * powf( fmaxf( glm::dot( *normal, H ), 0.0f ), primitive->shininess ) );
 
@@ -158,61 +159,82 @@ __device__ int raytrace( const glm::vec3* const ray, const glm::vec3* const sour
 }
 
 
-__device__ int shadowTest( glm::vec3* point, glm::vec3* normal, const _Primitive* const occluders, int occluderNum,
+__device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primitive* const occluders, int occluderNum,
                              const _Light* const light )
 {
     glm::vec3 L, LLocalFrame;
     glm::vec3 PLocalFrame;
     glm::vec3 O;
     float lightDst, occluderDst;
-    int shadowPct = 0;
+    float shadowPct = 0;
+    float delta;
+    ushort2 LSample;
   
 
-    if( light->pos[3] > 0 )
+    if( light->type == 0 ) //point local light
     {    
-        lightDst = glm::distance( *point, glm::vec3(light->pos) ); //distance in world coord
+        //lightDst = glm::distance( *point, glm::vec3(light->pos) ); //distance in world coord
         L = glm::vec3(light->pos) - *point ;
+        lightDst = glm::length( L );
+        LSample.x = LSample.y = 1;
     }
-    else
+    else if( light->type == 1 ) //point directional light
     {    
         lightDst = FLOAT_INF;
         L = glm::vec3(light->pos);
+        LSample.x = LSample.y = 1;
+    }
+    else if( light->type == 2 ) //area light
+    {
+        //lightDst = glm::distance( *point, glm::vec3(light->pos) ); //distance in world coord
+        L = glm::vec3(light->pos) - *point ;
+        lightDst = glm::length( L );
+        LSample.x = LSample.y = 4;
     }
 
     if( glm::dot( *normal, L ) < 0 ) 
-        return 1;
+        return 1.0f;
 
-    for( int i = 0; i < occluderNum; ++i )
+    delta = 1.0f/(LSample.x*LSample.y );
+
+    for( int y = 0; y < LSample.y; ++y ) for( int x = 0; x < LSample.x; ++x )
     {
-        //transform the light vector to object space and normalize it
-        LLocalFrame = glm::normalize( glm::mat3( occluders[i].invTrans ) * L ); 
-
-        //transform the test point to object space
-        PLocalFrame = glm::vec3( occluders[i].invTrans * glm::vec4( *point, 1.0f ) );
-
-        if( occluders[i].type == 0 ) //sphere
+        for( int i = 0; i < occluderNum; ++i )
         {
-            occluderDst = raySphereIntersect( occluders+i, &PLocalFrame ,&LLocalFrame );
-        }
-        else
-        {
-            occluderDst = rayTriangleIntersect( occluders+i,  &PLocalFrame, &LLocalFrame );
+            //transform the light vector to object space and normalize it
+            LLocalFrame = glm::normalize( glm::mat3( occluders[i].invTrans ) * L ); 
 
-        }
-        if( FLOAT_INF == occluderDst )
-           continue;
+            //transform the test point to object space
+            PLocalFrame = glm::vec3( occluders[i].invTrans * glm::vec4( *point, 1.0f ) );
 
-        //transform the occluder point to world frame
-        O = glm::vec3( occluders[i].transform * 
-                        glm::vec4( PLocalFrame + occluderDst *  LLocalFrame, 1 ) );
+            if( occluders[i].type == 0 ) //sphere
+            {
+                occluderDst = raySphereIntersect( occluders+i, &PLocalFrame ,&LLocalFrame );
+            }
+            else
+            {
+                occluderDst = rayTriangleIntersect( occluders+i,  &PLocalFrame, &LLocalFrame );
 
-        occluderDst = glm::distance( *point,  O );
-        if( occluderDst < lightDst )
-        {
-            shadowPct = 1;
-            return shadowPct;
-        }
+            }
+            if( FLOAT_INF == occluderDst )
+               continue;
+
+            //transform the occluder point to world frame
+            O = glm::vec3( occluders[i].transform * 
+                            glm::vec4( PLocalFrame + occluderDst *  LLocalFrame, 1 ) );
+
+            occluderDst = glm::distance( *point,  O );
+            if( occluderDst < lightDst )
+            {
+                shadowPct += delta;
+                //return shadowPct;
+            }
         
+        }
+        L = ( glm::vec3(light->pos) + glm::vec3( light->width * ( (1.0f+x)/(float)LSample.x ), light->width * ( (1.0f+y)/(float)LSample.y ), 0.0f ) ) -
+               *point;
+        lightDst = glm::length( L );
+
     }
     return shadowPct;
 }
@@ -233,7 +255,7 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
     glm::vec3 finalColor(0.0f,0.0f,0.0f);
     glm::vec3 cumulativeSpecular( 1.0f, 1.0f, 1.0f );
     int hitId;
-    int shadowPct;
+    float shadowPct;
    
     int outIdx;
 
@@ -265,14 +287,17 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
                 shadowPct = shadowTest( &shiftP, &surfaceNormal, primitives, primitiveNum, lights+i );
 
                 //sahding
-                if( shadowPct ==0 )
-                  color += shade( &incidentP, &surfaceNormal, &ray, &primitives[hitId], 0, lights+i );
+                //if( shadowPct ==0 )
+                  color += (1.0f-shadowPct)*shade( &incidentP, &surfaceNormal, &ray, &primitives[hitId], 0, lights+i );
             }
             color += primitives[hitId].ambient + primitives[hitId].emission;
     
         
         }
         finalColor += color * cumulativeSpecular;
+        
+        if( glm::all(glm::equal(primitives[hitId].specular, glm::vec3(0.0f,0.0f,0.0f) ) ) )
+            break;
 
         ray = glm::normalize( glm::reflect( ray, surfaceNormal ) );
         raysource = shiftP;

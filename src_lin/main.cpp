@@ -9,14 +9,14 @@
 
 using namespace std;
 
-const char* IOFILES[7][2] = {
+const char* IOFILES[6][2] = {
     "scene4-ambient.test", "scene4-ambient.ppm",
     "scene4-specular.test", "scene4-specular.ppm",
     "scene4-emission.test", "scene4-emission.ppm",
     "scene4-diffuse.test", "scene4-diffuse.ppm",
-    "scene5.test", "scene5.ppm",
-    "scene6.test", "scene6.ppm",
-    "scene7.test", "scene7.ppm" };
+    "scene-diffuse-boxlight.test", "scene-diffuse-boxlight.ppm" ,
+    "scene7.test","scene7.test" 
+};
 
 int main( int argc, char* argv[] )
 {
@@ -41,12 +41,12 @@ int main( int argc, char* argv[] )
     SceneDesc theScene(INIT_WIN_WIDTH,INIT_WIN_HEIGHT);
     ColorImage outputImage;
 
-    FileParser::parse( IOFILES[1][0], theScene );
+    FileParser::parse( IOFILES[4][0], theScene );
     outputImage.init( theScene.width, theScene.height );
     
     cudaRayTracer->renderImage( theScene, outputImage );
 
-    outputImage.outputPPM( IOFILES[1][1] );
+    outputImage.outputPPM( IOFILES[4][1] );
 
     return 0;
 }
