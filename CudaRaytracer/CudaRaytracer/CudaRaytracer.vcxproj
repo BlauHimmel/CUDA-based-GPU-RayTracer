@@ -22,6 +22,7 @@
     <ClCompile Include="..\..\src_lin\ColorImage.cpp" />
     <ClCompile Include="..\..\src_lin\cudaRaytracer.cpp" />
     <ClCompile Include="..\..\src_lin\fileParser.cpp" />
+    <ClCompile Include="..\..\src_lin\glRoutine.cpp" />
     <ClCompile Include="..\..\src_lin\light.cpp" />
     <ClCompile Include="..\..\src_lin\main.cpp" />
     <ClCompile Include="..\..\src_lin\raytracer.cpp" />
@@ -29,14 +30,13 @@
     <ClCompile Include="..\..\src_lin\sphere.cpp" />
     <ClCompile Include="..\..\src_lin\transform.cpp" />
     <ClCompile Include="..\..\src_lin\triangle.cpp" />
-    <ClCompile Include="glRoutine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src_lin\ColorImage.h" />
-    <ClInclude Include="..\..\src_lin\constant.h" />
     <ClInclude Include="..\..\src_lin\cudaRaytracer.h" />
     <ClInclude Include="..\..\src_lin\cudaRaytracerKernel.h" />
     <ClInclude Include="..\..\src_lin\fileParser.h" />
+    <ClInclude Include="..\..\src_lin\glRoutine.h" />
     <ClInclude Include="..\..\src_lin\light.h" />
     <ClInclude Include="..\..\src_lin\raytracer.h" />
     <ClInclude Include="..\..\src_lin\sceneDesc.h" />
@@ -46,7 +46,7 @@
     <ClInclude Include="..\..\src_lin\transform.h" />
     <ClInclude Include="..\..\src_lin\triangle.h" />
     <ClInclude Include="..\..\src_lin\util.h" />
-    <ClInclude Include="glRoutine.h" />
+    <ClInclude Include="..\..\src_lin\variables.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\src_lin\cudaRaytracerKernel.cu" />

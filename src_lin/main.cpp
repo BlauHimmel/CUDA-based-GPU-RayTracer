@@ -1,12 +1,12 @@
 #include <iostream>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
-#include "constant.h"
 #include "cudaRaytracer.h"
 #include "SceneDesc.h"
 #include "FileParser.h"
 #include "ColorImage.h"
 #include "glRoutine.h"
+#include "variables.h"
 
 using namespace std;
 
@@ -19,10 +19,18 @@ const char* IOFILES[6][2] = {
     "scene7.test","scene7.test" 
 };
 
+RayTracer* cudaRayTracer = NULL;
+int width, height;
+
 int main( int argc, char* argv[] )
 {
-    //glutInit( &argc, argv );
-    //glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL );
+    SceneDesc theScene;
+    ColorImage outputImage;
+    FileParser::parse( IOFILES[4][0], theScene );
+
+    outputImage.init( theScene.width, theScene.height );
+    glutInit( &argc, argv );
+    glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL );
 
     glutInitContextVersion( 4, 0 );
     glutInitContextFlags( GLUT_FORWARD_COMPATIBLE );
@@ -42,20 +50,15 @@ int main( int argc, char* argv[] )
     glutReshapeFunc( glut_reshape );
     glutKeyboardFunc( glut_keyboard );
     glutIdleFunc( glut_idle );
-
-
     
-    RayTracer* cudaRayTracer = new CudaRayTracer();
-    SceneDesc theScene(INIT_WIN_WIDTH,INIT_WIN_HEIGHT);
-    ColorImage outputImage;
+    cudaRayTracer = new CudaRayTracer();
 
-    FileParser::parse( IOFILES[4][0], theScene );
-    outputImage.init( theScene.width, theScene.height );
     
     cudaRayTracer->renderImage( theScene, outputImage );
 
     outputImage.outputPPM( IOFILES[4][1] );
 
+    delete cudaRayTracer;
     return 0;
 }
 
