@@ -29,6 +29,7 @@
     <ClCompile Include="..\..\src_lin\sphere.cpp" />
     <ClCompile Include="..\..\src_lin\transform.cpp" />
     <ClCompile Include="..\..\src_lin\triangle.cpp" />
+    <ClCompile Include="glRoutine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src_lin\ColorImage.h" />
@@ -45,6 +46,7 @@
     <ClInclude Include="..\..\src_lin\transform.h" />
     <ClInclude Include="..\..\src_lin\triangle.h" />
     <ClInclude Include="..\..\src_lin\util.h" />
+    <ClInclude Include="glRoutine.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="..\..\src_lin\cudaRaytracerKernel.cu" />
