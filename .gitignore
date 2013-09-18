@@ -2,5 +2,9 @@ PROJ1_MAC/
 PROJ1_NIX/
 renders/
 scenes/
+Debug*/
+Release*/
 src/
 log
+*.obj
+*.sdf
