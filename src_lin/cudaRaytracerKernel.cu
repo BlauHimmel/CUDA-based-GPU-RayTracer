@@ -23,6 +23,7 @@ __device__ float raySphereIntersect( const _Primitive* const sphere,
    float C = glm::dot( dst, dst ) - sphere->radius * sphere->radius;
    float D = B*B - C;
    
+   //returns the smallest positiive root that is real number, otherwise returns infiinite value
    return D > 0 ? ( -B-sqrt(D) > 0 ? -B-sqrt(D) : ( -B+sqrt(D) > 0 ? -B+sqrt(D) : FLOAT_INF) ) : FLOAT_INF;
     
 }
