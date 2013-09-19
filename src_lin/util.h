@@ -20,21 +20,6 @@ inline void checkError( cudaError_t err, const char* const filename, const int l
     }
 }
 
-//typedef struct _Triangle
-//{  
-//    glm::mat4 transform;
-//    glm::mat4 invTrans;
-//
-//    //temporary
-//    glm::vec3 diffuse;
-//    glm::vec3 specular;
-//    glm::vec3 emission;
-//    glm::vec3 ambient;
-//    float shininess;
-//
-//    //unsigned short material_id;
-//
-//} _Triangle;
 
 typedef struct _Primitive
 {

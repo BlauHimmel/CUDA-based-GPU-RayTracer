@@ -13,4 +13,9 @@ void glut_keyboard( unsigned char key, int x, int y);
 
 int initPBO();
 
+int intVertexData();
+
+GLuint initShader();
+
 int initGL();
+

@@ -1,11 +1,34 @@
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include "glRoutine.h"
+#include "variables.h"
+#include "util.h"
 
-GLuint pbo;
+using namespace std;
 
+float posData[] = { 0.0f, 0.0f, 0.0f,
+                    1.0f, 0.0f, 0.0f,
+                    1.0f, 1.0f, 0.0f,
+                    0.0f, 1.0f, 0.0f };
+
+GLuint pbo;  //handle of pixel buffer object
+GLuint vbo;  //handle of vertex buffer object
+GLuint vao;  //handle of vertex array object
+GLuint fragShader;
+GLuint vertShader;
+
+GLuint texID;
 
 void glut_display()
 {
+    //render a quad to display the image texture
+    glClearColor( 0, 0, 0, 0 );
+    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
+    glBindVertexArray( vao );
+    glDrawArrays( GL_TRIANGLES, 0, 2 );
+    glutSwapBuffers();
 }
 
 void glut_idle()
@@ -26,8 +49,117 @@ void glut_keyboard( unsigned char key, int x, int y)
 
 int initPBO()
 {
+    if( pbo ) 
+    {
+        //ungister from CUDA context
+
+        //destroy the existing pbo 
+        glDeleteBuffers( 1, &pbo ); pbo = 0;
+        glDeleteTextures( 1, &texID ); texID = 0;
+    }
+
+    //create a PBO
+    glGenBuffers(1, &pbo);
+    glBindBuffer( GL_PIXEL_UNPACK_BUFFER, pbo );
+    glBufferData( GL_PIXEL_UNPACK_BUFFER, sizeof( GLubyte) * win_w * win_h * 4, NULL, GL_STREAM_DRAW );
+    glBindBuffer( GL_PIXEL_UNPACK_BUFFER, 0 );
+
+    //register with CUAD context
+
+    //create texture for displaying the rendering result
+    glGenTextures( 1, &texID );
+    glBindTexture( GL_TEXTURE_2D, texID );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, win_w, win_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+    glBindTexture( GL_TEXTURE_2D, 0 );
+
+    return 0;
+}
+
+int initVertexData()
+{
+    glGenBuffers( 1, &vbo );
+    glBindBuffer( GL_ARRAY_BUFFER, vbo );
+    glBufferData( GL_ARRAY_BUFFER, sizeof( float) * 12, posData, GL_STATIC_DRAW );
+
+    //create and setup the vao
+    glGenVertexArrays( 1, &vao );
+    glBindVertexArray( vao );
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, (GLubyte*)NULL );
+
+    glBindBuffer( GL_ARRAY_BUFFER,0 );
+    glBindVertexArray(0);
+
+    return 0;
+}
+
+char* readFromFile( const char* filename, int* len )
+{
+	std::ifstream file;
+	file.open( filename, std::ios::binary );
+	if( !file.is_open() )
+	{
+        cerr<<"Read shader source failed!\n";
+		return NULL;
+	}
+
+	(*len)=0;
+	file.seekg( 0, std::ios::end );
+	(*len) = file.tellg();
+	file.seekg( 0, std::ios::beg );
+
+	if( (*len) == 0 )
+	{
+		cerr<<"Shader source zero length!\n";
+		return NULL;
+	}
+
+	char* buf = new char[(*len)+1];
+	file.read( buf, *len );
+    buf[(*len)] = '\0';
+	return buf;
+} 
+
+GLuint initShader( GLenum shaderType, const char* shaderSourceFile )
+{
+    GLint status;
+    int src_len;
+    GLuint shader = glCreateShader( shaderType );
+ 
+    const char* source = readFromFile( shaderSourceFile, &src_len );
+    if( source == NULL )
+        return 0;
+
+    glShaderSource( shader, 1, &source, NULL );
+    glCompileShader( shader );
+    glGetShaderiv( shader, GL_COMPILE_STATUS, &status );
+    if( !status )
+    {
+        cerr<<"shader source( "<<shaderSourceFile<<" ) compilation failed"<<endl;
+        return 0;
+    }
+    return shader;
+
 }
 
 int initGL()
 {
+    //init vbo
+    if( initVertexData() )
+        return -1;
+
+    //init pbo
+    if( initPBO() )
+        return -1;
+
+    //init shader
+    fragShader = initShader( GL_FRAGMENT_SHADER, "shaders\basic.frag" );
+    vertShader = initShader( GL_VERTEX_SHADER, "shaders\basic.vert" );
+
+    if( fragShader < 1 || vertShader < 1 )
+        return -1;
 }
+
