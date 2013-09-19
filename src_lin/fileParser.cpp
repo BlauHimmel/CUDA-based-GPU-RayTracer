@@ -3,6 +3,7 @@
 #include "shape.h"
 #include "sphere.h"
 #include "triangle.h"
+#include "material.h"
 #include "transform.h"
 #include <fstream>
 #include <iostream>
@@ -10,6 +11,9 @@
 #include <string>
 #include <array>
 #include "glm/glm.hpp"
+
+//glm wavefront obj loader
+#include "glm.h"
 
 
 using namespace std;
@@ -21,13 +25,28 @@ bool readvals(stringstream &s, const int numvals, float* values)
 {
     for (int i = 0; i < numvals; i++) {
         s>>values[i]; 
-        if (s.fail()) {
+        if (s.fail()) 
+        {
             cout << "Failed reading value " << i << " will skip\n"; 
             return false;
         }
     }
     return true; 
 }
+
+bool readstr( stringstream &s, const int numvals, string* str )
+{
+    for( int i = 0; i < numvals; i++ )
+    {
+        s>>str[i];
+        if (s.fail()) 
+        {
+            cout << "Failed reading value " << i << " will skip\n"; 
+            return false;
+        }
+    }
+}
+
 void rightmultiply(const mat4 & M, vector<mat4> &transfstack) 
 {
     mat4 &T = transfstack.back(); 
@@ -51,7 +70,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
     string output;
     //stringstream lineSStr;
     char lineBuf[256];
-    float param[10];
+    float param[40];
 
     vec3 diffuse(0.0f);
     vec3 specular(0.0f);
@@ -124,6 +143,13 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         {
             lineSStr>>output;
             cout<<output<<endl;
+        }
+        else if( itemName == "mtl" )
+        {
+            if( readvals( lineSStr, 13, param ) )// emission ambient diffuse specular shininess
+            {
+
+            }
         }
         else if( itemName == "diffuse" )
         {
@@ -369,9 +395,10 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
               
            }
         }
-
-        
-        
+        else if( itemName == "model" )
+        {
+            string modelName;
+        }
     }
 
     return 0;

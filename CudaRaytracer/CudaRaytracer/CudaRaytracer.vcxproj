@@ -22,9 +22,11 @@
     <ClCompile Include="..\..\src_lin\ColorImage.cpp" />
     <ClCompile Include="..\..\src_lin\cudaRaytracer.cpp" />
     <ClCompile Include="..\..\src_lin\fileParser.cpp" />
+    <ClCompile Include="..\..\src_lin\glm.cpp" />
     <ClCompile Include="..\..\src_lin\glRoutine.cpp" />
     <ClCompile Include="..\..\src_lin\light.cpp" />
     <ClCompile Include="..\..\src_lin\main.cpp" />
+    <ClCompile Include="..\..\src_lin\material.cpp" />
     <ClCompile Include="..\..\src_lin\raytracer.cpp" />
     <ClCompile Include="..\..\src_lin\sceneDesc.cpp" />
     <ClCompile Include="..\..\src_lin\sphere.cpp" />
@@ -36,8 +38,10 @@
     <ClInclude Include="..\..\src_lin\cudaRaytracer.h" />
     <ClInclude Include="..\..\src_lin\cudaRaytracerKernel.h" />
     <ClInclude Include="..\..\src_lin\fileParser.h" />
+    <ClInclude Include="..\..\src_lin\glm.h" />
     <ClInclude Include="..\..\src_lin\glRoutine.h" />
     <ClInclude Include="..\..\src_lin\light.h" />
+    <ClInclude Include="..\..\src_lin\material.h" />
     <ClInclude Include="..\..\src_lin\raytracer.h" />
     <ClInclude Include="..\..\src_lin\sceneDesc.h" />
     <ClInclude Include="..\..\src_lin\shape.h" />
