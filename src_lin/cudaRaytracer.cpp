@@ -1,6 +1,10 @@
+#include <GL/glew.h>
 #include <iostream>
+#include <cuda_gl_interop.h>
 #include "cudaRaytracer.h"
 #include "cudaRaytracerKernel.h"
+
+
 #include "timer.h"
 
 CudaRayTracer::CudaRayTracer()
@@ -28,52 +32,59 @@ CudaRayTracer::~CudaRayTracer()
     cleanUp();
 }
 
-void CudaRayTracer::renderImage( const SceneDesc &scene, ColorImage &img)
+void CudaRayTracer::renderImage( cudaGraphicsResource* pboResource )
 {
-    if( scene.width < 1 || scene.height < 1 )
-        return;
+    //if( scene.width < 1 || scene.height < 1 )
+    //    return;
 
-    h_outputImage = new unsigned char[3*scene.width*scene.height];
-    memset( h_outputImage, 0, 3*scene.width*scene.height );
+    //h_outputImage = new unsigned char[3*scene.width*scene.height];
+    //memset( h_outputImage, 0, 3*scene.width*scene.height );
 
-    //Pack scene description data
-    packSceneDescData( scene );
+    ////Pack scene description data
+    //packSceneDescData( scene );
 
-    //allocate memory in the device
-    cudaErrorCheck( cudaMalloc( &d_outputImage, sizeof(unsigned char)*3*scene.width*scene.height ) );
-    cudaErrorCheck( cudaMalloc( &d_primitives, sizeof( _Primitive ) * numPrimitive ) );
-    cudaErrorCheck( cudaMalloc( &d_lights, sizeof( _Light ) * numLight ) );
-    cudaErrorCheck( cudaMalloc( &d_materials, sizeof( _Material ) * numMaterial ) );
+    ////allocate memory in the device
+    //cudaErrorCheck( cudaMalloc( &d_outputImage, sizeof(unsigned char)*3*scene.width*scene.height ) );
+    //cudaErrorCheck( cudaMalloc( &d_primitives, sizeof( _Primitive ) * numPrimitive ) );
+    //cudaErrorCheck( cudaMalloc( &d_lights, sizeof( _Light ) * numLight ) );
+    //cudaErrorCheck( cudaMalloc( &d_materials, sizeof( _Material ) * numMaterial ) );
 
-    //Send scene description data to the device
-    cudaErrorCheck( cudaMemcpy( (void*)d_primitives, h_pPrimitives, sizeof( _Primitive ) * numPrimitive, cudaMemcpyHostToDevice) );
-    cudaErrorCheck( cudaMemcpy( (void*)d_lights, h_pLights, sizeof( _Light ) * numLight , cudaMemcpyHostToDevice ) );
-    cudaErrorCheck( cudaMemcpy( (void*)d_materials, h_pMaterials, sizeof( _Material ) * numMaterial , cudaMemcpyHostToDevice ) );
-    cudaErrorCheck( cudaMemset( (void*)d_outputImage, 0, sizeof(unsigned char)*3*scene.width*scene.height ) );
+    ////Send scene description data to the device
+    //cudaErrorCheck( cudaMemcpy( (void*)d_primitives, h_pPrimitives, sizeof( _Primitive ) * numPrimitive, cudaMemcpyHostToDevice) );
+    //cudaErrorCheck( cudaMemcpy( (void*)d_lights, h_pLights, sizeof( _Light ) * numLight , cudaMemcpyHostToDevice ) );
+    //cudaErrorCheck( cudaMemcpy( (void*)d_materials, h_pMaterials, sizeof( _Material ) * numMaterial , cudaMemcpyHostToDevice ) );
+    //cudaErrorCheck( cudaMemset( (void*)d_outputImage, 0, sizeof(unsigned char)*3*scene.width*scene.height ) );
+
+    cudaErrorCheck( cudaGraphicsMapResources( 1, &pboResource, 0 ) );
+    cudaErrorCheck( cudaGraphicsResourceGetMappedPointer((void**) &d_outputImage, &pboSize, pboResource ) );
+    cudaErrorCheck( cudaMemset( (void*)d_outputImage, 0, sizeof(unsigned char) * 4 * width * height ) );
 
     GpuTimer timer;
     timer.Start();
     //Launch the ray tracing kernel through the wrapper
-    rayTracerKernelWrapper( d_outputImage, scene.width, scene.height, cameraData, 
+    rayTracerKernelWrapper( d_outputImage, width, height, cameraData, 
                             d_primitives, numPrimitive, d_lights, numLight, d_materials, numMaterial );
     timer.Stop();
-    //Read back the image
-    cudaErrorCheck( cudaMemcpy( h_outputImage, d_outputImage, sizeof(unsigned char)*3*scene.width*scene.height, cudaMemcpyDeviceToHost ) );
-    std::cout<<"Kernel running time: "<<timer.Elapsed()<<" ms.\n";
-    Pixel pxColor;
-    //clear ColorImage buffer with black
-    pxColor.R = pxColor.G = pxColor.B = 0;
-    img.clear(pxColor );
-    //ouput color 
-    for( int h = 0; h < scene.height; ++h )
-        for( int w = 0; w < scene.width; ++w )
-        {
-            pxColor.R = h_outputImage[3*h*scene.width+3*w];
-            pxColor.G = h_outputImage[3*h*scene.width+3*w+1];
-            pxColor.B = h_outputImage[3*h*scene.width+3*w+2];
-            img.writePixel( w, h, pxColor );
-        }
-    cleanUp();
+
+    cudaErrorCheck( cudaGraphicsUnmapResources( 1, &pboResource, 0 ) );
+
+    ////Read back the image
+    //cudaErrorCheck( cudaMemcpy( h_outputImage, d_outputImage, sizeof(unsigned char)*3*scene.width*scene.height, cudaMemcpyDeviceToHost ) );
+    //std::cout<<"Kernel running time: "<<timer.Elapsed()<<" ms.\n";
+    //Pixel pxColor;
+    ////clear ColorImage buffer with black
+    //pxColor.R = pxColor.G = pxColor.B = 0;
+    //img.clear(pxColor );
+    ////ouput color 
+    //for( int h = 0; h < scene.height; ++h )
+    //    for( int w = 0; w < scene.width; ++w )
+    //    {
+    //        pxColor.R = h_outputImage[3*h*scene.width+3*w];
+    //        pxColor.G = h_outputImage[3*h*scene.width+3*w+1];
+    //        pxColor.B = h_outputImage[3*h*scene.width+3*w+2];
+    //        img.writePixel( w, h, pxColor );
+    //    }
+    //cleanUp();
     
 }
 
@@ -83,6 +94,9 @@ void CudaRayTracer::packSceneDescData( const SceneDesc &sceneDesc )
     cameraData.eyePos = sceneDesc.eyePos;
     cameraData.viewportHalfDim.y = tan( sceneDesc.fovy / 2.0 );
     cameraData.viewportHalfDim.x = (float)sceneDesc.width / (float) sceneDesc.height * cameraData.viewportHalfDim.y;
+
+    width = sceneDesc.width;
+    height = sceneDesc.height;
 
     //construct the 3 orthoogonal vectors constitute a frame
     cameraData.uVec = glm::normalize( sceneDesc.up );
@@ -157,9 +171,9 @@ void CudaRayTracer::cleanUp()
         delete [] h_outputImage;
     h_outputImage = 0;
 
-    if( d_outputImage )
-        cudaErrorCheck( cudaFree( d_outputImage ) );
-    d_outputImage = 0;
+    //if( d_outputImage )
+    //    cudaErrorCheck( cudaFree( d_outputImage ) );
+    //d_outputImage = 0;
 
     if( d_primitives )
         cudaErrorCheck( cudaFree( d_primitives  ) );
@@ -173,4 +187,23 @@ void CudaRayTracer::cleanUp()
     if( d_materials )
         cudaErrorCheck( cudaFree( d_materials ) );
     d_materials = 0;
+}
+
+void  CudaRayTracer::init( const SceneDesc &scene )
+{
+    if( scene.width < 1 || scene.height < 1 )
+        return;
+
+    //Pack scene description data
+    packSceneDescData( scene );
+
+    //allocate memory in the device
+    cudaErrorCheck( cudaMalloc( &d_primitives, sizeof( _Primitive ) * numPrimitive ) );
+    cudaErrorCheck( cudaMalloc( &d_lights, sizeof( _Light ) * numLight ) );
+    cudaErrorCheck( cudaMalloc( &d_materials, sizeof( _Material ) * numMaterial ) );
+
+    //Send scene description data to the device
+    cudaErrorCheck( cudaMemcpy( (void*)d_primitives, h_pPrimitives, sizeof( _Primitive ) * numPrimitive, cudaMemcpyHostToDevice) );
+    cudaErrorCheck( cudaMemcpy( (void*)d_lights, h_pLights, sizeof( _Light ) * numLight , cudaMemcpyHostToDevice ) );
+    cudaErrorCheck( cudaMemcpy( (void*)d_materials, h_pMaterials, sizeof( _Material ) * numMaterial , cudaMemcpyHostToDevice ) );
 }

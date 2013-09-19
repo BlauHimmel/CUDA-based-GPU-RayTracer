@@ -5,16 +5,21 @@
 #include "ColorImage.h"
 #include "util.h"
 
-class CudaRayTracer: public RayTracer
+class CudaRayTracer
 {
 public:
     CudaRayTracer();
     ~CudaRayTracer();
-    void renderImage(const SceneDesc &scene, ColorImage &img);
+    void renderImage( cudaGraphicsResource* pboResource );
+    void init( const SceneDesc &scene );
+    void registerPBO( unsigned int pbo );
+    void unregisterPBO();
 private:
     void cleanUp();
     void packSceneDescData( const SceneDesc &sceneDesc );
 
+    int width;
+    int height;
     //Host-side and packed data for transferring to the device
     _CameraData cameraData;
     _Primitive* h_pPrimitives;
@@ -33,4 +38,6 @@ private:
     _Light* d_lights;
     _Material* d_materials;
 
+    //Cuda-OpenGL interop objects
+    size_t pboSize;
 };

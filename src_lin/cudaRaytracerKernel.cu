@@ -266,7 +266,7 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
     if( idx.x > width || idx.y > height )
         return;
 
-    outIdx = idx.y * width * 3 + 3 * idx.x; //element to shade in the output buffer
+    outIdx = idx.y * width * 4 + 4 * idx.x; //element to shade in the output buffer
 
     offset.x = cameraData.viewportHalfDim.x * ( (idx.x+0.5) / (width/2.0) - 1 );
     offset.y = cameraData.viewportHalfDim.y * ( 1- (idx.y+0.5) / (height/2.0)  );

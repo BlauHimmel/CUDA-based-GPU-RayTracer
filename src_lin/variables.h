@@ -1,6 +1,5 @@
 #pragma once
-#include "raytracer.h"
 
-extern RayTracer* cudaRayTracer;
+extern CudaRayTracer* cudaRayTracer;
 extern unsigned int win_w;
 extern unsigned int win_h;

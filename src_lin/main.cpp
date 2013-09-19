@@ -21,7 +21,7 @@ const char* IOFILES[6][2] = {
     "scene7.test","scene7.test" 
 };
 
-RayTracer* cudaRayTracer = NULL;
+CudaRayTracer* cudaRayTracer = NULL;
 unsigned int win_w, win_h;
 
 int main( int argc, char* argv[] )
@@ -37,9 +37,9 @@ int main( int argc, char* argv[] )
     glutInit( &argc, argv );
     glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH | GLUT_STENCIL );
 
-    glutInitContextVersion( 4, 0 );
+    glutInitContextVersion( 4,0 );
     glutInitContextFlags( GLUT_FORWARD_COMPATIBLE );
-    glutInitContextProfile( GLUT_CORE_PROFILE );
+    glutInitContextProfile( GLUT_COMPATIBILITY_PROFILE );
 
     glutInitWindowSize( theScene.width, theScene.height );
     glutCreateWindow( "GPU RayTracer" );
@@ -51,19 +51,25 @@ int main( int argc, char* argv[] )
         return 1;
     }
 
+    if( initGL() != 0 )
+        return 1;
+
+    cudaRayTracer = new CudaRayTracer();
+    cudaRayTracer->init( theScene );
+
     glutDisplayFunc( glut_display );
     glutReshapeFunc( glut_reshape );
     glutKeyboardFunc( glut_keyboard );
     glutIdleFunc( glut_idle );
     glutMainLoop();
-    //cudaRayTracer = new CudaRayTracer();
+    
 
     //
     //cudaRayTracer->renderImage( theScene, outputImage );
 
     //outputImage.outputPPM( IOFILES[4][1] );
-
-    //delete cudaRayTracer;
+    cleanUpGL();
+    delete cudaRayTracer;
     return 0;
 }
 

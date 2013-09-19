@@ -16,6 +16,7 @@ int initPBO();
 int intVertexData();
 
 GLuint initShader();
+GLuint initShaderProg();
 
 int initGL();
-
+void cleanUpGL();
