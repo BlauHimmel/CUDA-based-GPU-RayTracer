@@ -4,6 +4,7 @@
 #include "sceneDesc.h"
 #include "ColorImage.h"
 #include "util.h"
+#include <curand_kernel.h>
 
 class CudaRayTracer
 {
@@ -14,6 +15,7 @@ public:
     void init( const SceneDesc &scene );
     void registerPBO( unsigned int pbo );
     void unregisterPBO();
+    void setupDevStates(); //for random number generation
 private:
     void cleanUp();
     void packSceneDescData( const SceneDesc &sceneDesc );
@@ -43,4 +45,7 @@ private:
 
     //Cuda-OpenGL interop objects
     size_t pboSize;
+
+    //rand state
+    curandState *d_devStates;
 };

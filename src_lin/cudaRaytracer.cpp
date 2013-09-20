@@ -25,6 +25,8 @@ CudaRayTracer::CudaRayTracer()
     d_primitives = 0;
     d_lights = 0;
     d_materials = 0;
+
+    d_devStates = 0;
 }
 
 CudaRayTracer::~CudaRayTracer()
@@ -44,7 +46,7 @@ void CudaRayTracer::renderImage( cudaGraphicsResource* pboResource )
     timer.Start();
     //Launch the ray tracing kernel through the wrapper
     rayTracerKernelWrapper( d_outputImage, width, height, cameraData, 
-                            d_primitives, numPrimitive, d_lights, numLight, d_materials, numMaterial );
+        d_primitives, numPrimitive, d_lights, numLight, d_materials, numMaterial, 1, d_devStates );
     timer.Stop();
 
     std::cout<<timer.Elapsed()<<std::endl;
@@ -162,6 +164,10 @@ void CudaRayTracer::cleanUp()
     if( d_materials )
         cudaErrorCheck( cudaFree( d_materials ) );
     d_materials = 0;
+
+    if( d_devStates  )
+       cudaErrorCheck( cudaFree(d_devStates) );
+    d_devStates = 0;
 }
 
 void  CudaRayTracer::init( const SceneDesc &scene )
@@ -183,4 +189,12 @@ void  CudaRayTracer::init( const SceneDesc &scene )
     cudaErrorCheck( cudaMemcpy( (void*)d_primitives, h_pPrimitives, sizeof( _Primitive ) * numPrimitive, cudaMemcpyHostToDevice) );
     cudaErrorCheck( cudaMemcpy( (void*)d_lights, h_pLights, sizeof( _Light ) * numLight , cudaMemcpyHostToDevice ) );
     cudaErrorCheck( cudaMemcpy( (void*)d_materials, h_pMaterials, sizeof( _Material ) * numMaterial , cudaMemcpyHostToDevice ) );
+
+    setupDevStates();
+}
+
+void CudaRayTracer::setupDevStates()
+{
+    cudaErrorCheck( cudaMalloc( (void**)&d_devStates, 16*16*sizeof(curandState) ) );
+    setupRandSeedWrapper(8,8, d_devStates ) ;
 }

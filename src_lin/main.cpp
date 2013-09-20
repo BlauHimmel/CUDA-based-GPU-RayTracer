@@ -13,12 +13,12 @@ using namespace std;
 
 
 const char* IOFILES[6][2] = {
-    "scene4-ambient.test", "scene4-ambient.ppm",
-    "scene4-specular.test", "scene4-specular.ppm",
-    "scene4-emission.test", "scene4-emission.ppm",
-    "scene5.test", "scene5.ppm",
-    "scene-diffuse-boxlight.test", "scene-diffuse-boxlight.ppm" ,
-    "testScene.test","scene7.test" 
+    "testScene.scene","testScene.ppm",
+    "testScene2.scene","testScene2.ppm", 
+    "testScene3.scene","testScene3.ppm",
+    "testScene4.scene","testScene4.ppm",
+    "testScene5.scene","testScene5.ppm" ,
+    "testScene6.scene","testScene6.ppm"
 };
 
 CudaRayTracer* cudaRayTracer = NULL;
@@ -28,7 +28,7 @@ int main( int argc, char* argv[] )
 {
     SceneDesc theScene;
     ColorImage outputImage;
-    FileParser::parse( IOFILES[5][0], theScene );
+    FileParser::parse( IOFILES[0][0], theScene );
 
     outputImage.init( theScene.width, theScene.height );
     win_w = theScene.width;

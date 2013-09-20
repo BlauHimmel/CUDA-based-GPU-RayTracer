@@ -3,7 +3,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
-
+#include <curand_kernel.h>
 #include "cudaRaytracerKernel.h"
 
 __device__ glm::vec3 getSurfaceNormal( glm::vec3* point, const _Primitive* const primitive )
@@ -30,7 +30,6 @@ __device__ float raySphereIntersect( const _Primitive* const sphere,
 
 __device__ float rayTriangleIntersect( const _Primitive* const triangle, const glm::vec3* const raySource, const glm::vec3* const rayDir )
 {
-        //glm::vec3 planeNormal;
     glm::vec3 BAcrossQA;
     glm::vec3 CBcrossQB;
     glm::vec3 ACcrossQC;
@@ -39,7 +38,6 @@ __device__ float rayTriangleIntersect( const _Primitive* const triangle, const g
     float plane_delta;
     float ray_offset;
 
-    //planeNormal = glm::normalize( glm::cross( v[1] - v[0], v[2] - v[0] ) );
     plane_delta = glm::dot( triangle->pn, triangle->vert[0] );
 
     if( glm::dot( triangle->pn, *rayDir ) == 0 ) //the ray and the plane are parallel
@@ -72,26 +70,26 @@ __device__ glm::vec3 shade( glm::vec3* point, glm::vec3* normal, glm::vec3* eyeR
 {
     glm::vec3 L;
     glm::vec3 H;
-    float lightDst; //Distance of light source
-    float attenu;   //attenuation factor
-    //glm::vec3 color = primitive->emission + primitive->ambient;
+    //float lightDst;
+    //float attenu;   //attenuation factor, unused right now
+
     glm::vec3 color(0.0f,0.0f,0.0f);
 
     if( light->pos[3] > 0 ) //local light
     {
         L = glm::normalize( glm::vec3(light->pos) - (*point) );
         //lightDst = glm::distance( (*point), glm::vec3(light->pos));
-        lightDst = glm::length( L );
+        //lightDst = glm::length( L );
         //attenu = light->attenu_const + 
         //            ( light->attenu_linear + light->attenu_quadratic * lightDst ) * lightDst;
     }
     else
     {
         L = glm::normalize( glm::vec3(light->pos) );
-        attenu = 1.0f;
+        //attenu = 1.0f;
     }
 
-    if( glm::dot( L, *normal ) <= 0 ) //the face is turned away from this light
+    if( glm::dot( L, *normal ) < 0 ) //the face is turned away from this light
         return color;
 
     H = glm::normalize( L - *eyeRay );
@@ -110,18 +108,13 @@ __device__ int raytrace( const glm::vec3* const ray, const glm::vec3* const sour
     float nearest = FLOAT_INF;
     float dst;
     int   id = -1;
-    int threadId = blockDim.y * threadIdx.y + threadIdx.x;
-    //glm::vec3 rayLocalCoord;
-    //glm::vec3 sourceLocalCoord;
+    //int threadId = blockDim.y * threadIdx.y + threadIdx.x;
+
     glm::vec3 tmpP, tmpN;
 
 
     for( int i = 0; i < primitiveNum; ++i )
     {
-
-        //transform ray to object coordinate
-        //rayLocalCoord =  glm::normalize( glm::vec3( primitives[i].invTrans * glm::vec4( *ray, 0.0f ) ) );
-        //sourceLocalCoord = glm::vec3( primitives[i].invTrans * glm::vec4( *source, 1.0f ) );
 
         if( primitives[i].type == 0 ) //sphere
         {
@@ -135,18 +128,13 @@ __device__ int raytrace( const glm::vec3* const ray, const glm::vec3* const sour
         if( FLOAT_INF == dst )
            continue;
 
-        tmpP = *source + ( dst * (*ray) );
-
-        //transform the incident point and normal to world coordinate
+        tmpP = *source + ( dst * (*ray) );  
         
         tmpN = getSurfaceNormal( &tmpP, primitives+i );
-        //tmpN = glm::normalize( glm::transpose( glm::mat3( primitives[i].invTrans ) ) * (tmpN) );
-        //tmpP = glm::vec3( (primitives[i].transform * glm::vec4( tmpP, 1.0f )) );
+
 
         if( glm::dot( tmpN, *ray ) > 0 ) //surface turnes away from the camera
             continue;
-      
-        //dst = glm::distance( tmpP, *source );
 
         if( dst < nearest )
         {
@@ -163,21 +151,19 @@ __device__ int raytrace( const glm::vec3* const ray, const glm::vec3* const sour
 
 
 __device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primitive* const occluders, int occluderNum,
-                             const _Light* const light )
+                             const _Light* const light, curandState *state )
 {
     glm::vec3 L;
-    //, LLocalFrame;
-    //glm::vec3 PLocalFrame;
+
     glm::vec3 O;
     float lightDst, occluderDst;
     float shadowPct = 0;
     float delta;
     ushort2 LSample;
-  
+    int threadId = threadIdx.x + blockDim.x * threadIdx.y;
 
     if( light->type == 0 ) //point local light
     {    
-        //lightDst = glm::distance( *point, glm::vec3(light->pos) ); //distance in world coord
         L = glm::vec3(light->pos) - *point ;
         lightDst = glm::length( L );
         LSample.x = LSample.y = 1;
@@ -190,10 +176,10 @@ __device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primiti
     }
     else if( light->type == 2 ) //area light
     {
-        //lightDst = glm::distance( *point, glm::vec3(light->pos) ); //distance in world coord
+
         L = glm::vec3(light->pos) - *point ;
         lightDst = glm::length( L );
-        LSample.x = LSample.y = 2;
+        LSample.x = LSample.y = 4;
     }
 
     if( glm::dot( *normal, L ) < 0 ) 
@@ -206,11 +192,7 @@ __device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primiti
         L = glm::normalize(L);
         for( int i = 0; i < occluderNum; ++i )
         {
-            //transform the light vector to object space and normalize it
-            //LLocalFrame = glm::normalize( glm::mat3( occluders[i].invTrans ) * L ); 
 
-            //transform the test point to object space
-            //PLocalFrame = glm::vec3( occluders[i].invTrans * glm::vec4( *point, 1.0f ) );
 
             if( occluders[i].type == 0 ) //sphere
             {
@@ -224,21 +206,17 @@ __device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primiti
             if( FLOAT_INF == occluderDst )
                continue;
 
-            //transform the occluder point to world frame
-            //O = glm::vec3( occluders[i].transform * 
-            //                glm::vec4( PLocalFrame + occluderDst *  LLocalFrame, 1 ) );
 
-
-            //occluderDst = glm::distance( *point,  O );
             if( occluderDst < lightDst )
             {
                 shadowPct += delta;
                 break;
-                //return shadowPct;
             }
         
         }
-        L = ( glm::vec3(light->pos) + glm::vec3( light->width * ( (1.0f+x)/(float)LSample.x ), light->width * ( (1.0f+y)/(float)LSample.y ), 0.0f ) ) -
+        L = ( glm::vec3(light->pos) + glm::vec3( light->width * ( (1.0f+x*curand_uniform(state+threadId) )/(float)LSample.x ),
+                                                 0.0f, 
+                                                 light->width * ( (1.0f+y*curand_uniform(state+threadId))/(float)LSample.y ) ) ) -
                *point;
         lightDst = glm::length( L );
 
@@ -246,9 +224,9 @@ __device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primiti
     return shadowPct;
 }
 
-__global__ void raycast( unsigned char* const outputImage, int width, int height, _CameraData cameraData,
+__global__ void raycastKernel( unsigned char* const outputImage, int width, int height, _CameraData cameraData,
                          const _Primitive* const primitives, int primitiveNum,
-                         const _Light* const lights, int lightNum, _Material* mtls, int mtlNum )
+                         const _Light* const lights, int lightNum, _Material* mtls, int mtlNum, curandState *state )
 {
     
     ushort2 idx;
@@ -283,7 +261,7 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
     ray = glm::normalize( ray );
     raysource = cameraData.eyePos;
 
-    for( int depth = 0; depth <3; ++depth )
+    for( int depth = 0; depth <5; ++depth )
     {
         color.x = color.y = color.z = 0.0f; //clear color vector for use in current iteration
         hitId = raytrace( &ray,&raysource, primitives, primitiveNum, lights, lightNum, &incidentP, &surfaceNormal );
@@ -291,13 +269,17 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
         {
             mtl = mtls[primitives[hitId].mtl_id];
             shiftP = incidentP +  (0.001f * surfaceNormal);
-            for( int i = 0; i < lightNum; ++i )
+            if( hitId > 1 )
             {
-                shadowPct =  shadowTest( &shiftP, &surfaceNormal, primitives, primitiveNum, lights+i );
+                for( int i = 0; i < lightNum; ++i )
+                {
+                    shadowPct = 0;
+                    shadowPct =  shadowTest( &shiftP, &surfaceNormal, primitives+2, primitiveNum-2, lights+i, state );
 
-                //sahding
-                //if( shadowPct ==0 )
-                  color += (1.0f-shadowPct)*shade( &incidentP, &surfaceNormal, &ray, &primitives[hitId], &mtl, lights+i );
+                    //sahding
+                    //if( shadowPct ==0 )
+                      color += (1.0f-shadowPct)*shade( &incidentP, &surfaceNormal, &ray, &primitives[hitId], &mtl, lights+i );
+                }
             }
             color += mtl.ambient + mtl.emission;
     
@@ -322,17 +304,38 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
 
 }
 
+
+__global__ void rand_setup_kernel(curandState *state)
+{
+    int id = threadIdx.x + blockIdx.y * blockDim.x;
+
+    curand_init(1234, id, 0, &state[id]);
+}
+
+
 void rayTracerKernelWrapper( unsigned char* const outputImage, int width, int height, _CameraData cameraData,
                               const _Primitive* const primitives, int primitiveNum,
-                              const _Light* const lights, int lightNum, _Material* mtl, int mtlNum )
+                              const _Light* const lights, int lightNum, _Material* mtl, int mtlNum, int DOPsampleCount, curandState *state )
 {
-    dim3 blockSize = dim3( 16, 16);
+    dim3 blockSize = dim3( 8,8 );
     dim3 gridSize = dim3( (width + blockSize.x-1)/blockSize.x, (height + blockSize.y-1)/blockSize.y );
 
     //The ray tracing work is done in the kernel
-    raycast<<< gridSize, blockSize >>>( outputImage, width, height, cameraData, primitives, primitiveNum,
-                                       lights, lightNum, mtl, mtlNum );
+    raycastKernel<<< gridSize, blockSize >>>( outputImage, width, height, cameraData, primitives, primitiveNum,
+                                       lights, lightNum, mtl, mtlNum, state );
     cudaErrorCheck( cudaGetLastError() );
     cudaDeviceSynchronize(); 
     cudaErrorCheck( cudaGetLastError() );
+}
+
+__global__ void setupRandSeed(curandState *state)
+{
+    int id = threadIdx.x + blockIdx.x * blockDim.x;
+
+    curand_init(1234, id, 0, &state[id]);
+}
+
+void setupRandSeedWrapper( int dimX, int dimY, curandState* states ) 
+{
+    setupRandSeed<<<dimX, dimY>>>(states);
 }
