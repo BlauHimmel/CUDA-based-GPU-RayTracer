@@ -1,12 +1,6 @@
 #pragma once
 
 #define GLM_SWIZZLE
-// Transform header file to define the interface. 
-// The class is all static for simplicity
-// You need to implement left, up and lookAt
-// Rotate is a helper function
-
-// Include the helper glm library, including matrix transform extensions
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"

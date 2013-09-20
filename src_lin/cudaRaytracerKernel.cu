@@ -65,36 +65,37 @@ __device__ float rayTriangleIntersect( const _Primitive* const triangle, const g
 }
 
 
-__device__ glm::vec3 shade( glm::vec3* point, glm::vec3* normal, glm::vec3* eyeRay, const _Primitive* const primitive, 
-                           const _Material* const mtl, const _Light* const light )
+__device__ glm::vec3 shade( glm::vec3* point, glm::vec3* normal, glm::vec3* eyeRay, 
+                           const _Material* const mtl, const glm::vec3* const lightColor,
+                           const glm::vec3* const L )
 {
-    glm::vec3 L;
+    //glm::vec3 L;
     glm::vec3 H;
     //float lightDst;
     //float attenu;   //attenuation factor, unused right now
 
     glm::vec3 color(0.0f,0.0f,0.0f);
 
-    if( light->pos[3] > 0 ) //local light
-    {
-        L = glm::normalize( glm::vec3(light->pos) - (*point) );
-        //lightDst = glm::distance( (*point), glm::vec3(light->pos));
-        //lightDst = glm::length( L );
-        //attenu = light->attenu_const + 
-        //            ( light->attenu_linear + light->attenu_quadratic * lightDst ) * lightDst;
-    }
-    else
-    {
-        L = glm::normalize( glm::vec3(light->pos) );
-        //attenu = 1.0f;
-    }
+    //if( lightPos->x > .0f ) //local light
+    //{
+    //    L = glm::normalize( glm::vec3(*lightPos) - (*point) );
+    //    //lightDst = glm::distance( (*point), glm::vec3(light->pos));
+    //    //lightDst = glm::length( L );
+    //    //attenu = light->attenu_const + 
+    //    //            ( light->attenu_linear + light->attenu_quadratic * lightDst ) * lightDst;
+    //}
+    //else
+    //{
+    //    L = glm::normalize( glm::vec3(*lightPos) );
+    //    //attenu = 1.0f;
+    //}
 
-    if( glm::dot( L, *normal ) < 0 ) //the face is turned away from this light
+    if( glm::dot( *L, *normal ) < 0 ) //the face is turned away from this light
         return color;
 
-    H = glm::normalize( L - *eyeRay );
-    color = light->color   *
-                ( mtl->diffuse * fmaxf( glm::dot( *normal, L ), 0.0f ) +
+    H = glm::normalize( *L - *eyeRay );
+    color = (*lightColor)   *
+                ( mtl->diffuse * fmaxf( glm::dot( *normal, *L ), 0.0f ) +
                 mtl->specular * powf( fmaxf( glm::dot( *normal, H ), 0.0f ), mtl->shininess ) );
 
 
@@ -108,10 +109,10 @@ __device__ int raytrace( const glm::vec3* const ray, const glm::vec3* const sour
     float nearest = FLOAT_INF;
     float dst;
     int   id = -1;
-    //int threadId = blockDim.y * threadIdx.y + threadIdx.x;
+    int threadId = blockDim.y * threadIdx.y + threadIdx.x;
 
     glm::vec3 tmpP, tmpN;
-
+    //__shared__ _Primitive s_primitive;
 
     for( int i = 0; i < primitiveNum; ++i )
     {
@@ -150,15 +151,16 @@ __device__ int raytrace( const glm::vec3* const ray, const glm::vec3* const sour
 }
 
 
-__device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primitive* const occluders, int occluderNum,
+__device__ glm::vec3 shadowTest( glm::vec3* point, glm::vec3* normal, glm::vec3 *eyeRay,const _Primitive* const occluders, int occluderNum, const _Material* const mtl,
                              const _Light* const light, curandState *state )
 {
+    glm::vec3 color( .0f, .0f, .0f );
     glm::vec3 L;
-
     glm::vec3 O;
     float lightDst, occluderDst;
     float shadowPct = 0;
-    float delta;
+    float delta = 1;
+    float deltaX = 1;
     ushort2 LSample;
     int threadId = threadIdx.x + blockDim.x * threadIdx.y;
 
@@ -176,20 +178,31 @@ __device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primiti
     }
     else if( light->type == 2 ) //area light
     {
-
-        L = glm::vec3(light->pos) - *point ;
-        lightDst = glm::length( L );
         LSample.x = LSample.y = 4;
+        deltaX = light->width * 1.0f / LSample.x;
+        delta = 1.0f/ LSample.x / LSample.y; 
+
+        //L = glm::vec3(light->pos) - *point ;
+        L = ( glm::vec3(light->pos) -glm::vec3(light->width/2.0,0, light->width /2.0 )
+                                     + glm::vec3( deltaX * curand_uniform(state+threadId),
+                                                 0.0f, 
+                                                 deltaX * curand_uniform(state+threadId) ) ) -
+               *point;
+        lightDst = glm::length( L );
+        
     }
 
     if( glm::dot( *normal, L ) < 0 ) 
-        return 1.0f;
+        return color;
+   
+ 
+    //delta = 1.0f/(LSample.x*LSample.y );
 
-    delta = 1.0f/(LSample.x*LSample.y );
-
-    for( int y = 0; y < LSample.y; ++y ) for( int x = 0; x < LSample.x; ++x )
+    for( int y = 1; y <= LSample.y; ++y ) 
+        for( int x = 1; x <= LSample.x; ++x )
     {
         L = glm::normalize(L);
+        shadowPct = 0;
         for( int i = 0; i < occluderNum; ++i )
         {
 
@@ -209,19 +222,21 @@ __device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primiti
 
             if( occluderDst < lightDst )
             {
-                shadowPct += delta;
+                shadowPct = 1.0f;
                 break;
             }
         
         }
-        L = ( glm::vec3(light->pos) + glm::vec3( light->width * ( (1.0f+x*curand_uniform(state+threadId) )/(float)LSample.x ),
+        color += (1-shadowPct) * delta * shade(point, normal, eyeRay, mtl, &light->color, &L );
+        L = ( glm::vec3(light->pos) + -glm::vec3(light->width/2.0,0, light->width /2.0 ) +
+                                                 glm::vec3( deltaX * ( 1.0f+x*curand_uniform(state+threadId) ),
                                                  0.0f, 
-                                                 light->width * ( (1.0f+y*curand_uniform(state+threadId))/(float)LSample.y ) ) ) -
+                                                 deltaX * ( 1.0f+y*curand_uniform(state+threadId) ) ) ) -
                *point;
         lightDst = glm::length( L );
 
     }
-    return shadowPct;
+    return color;
 }
 
 __global__ void raycastKernel( unsigned char* const outputImage, int width, int height, _CameraData cameraData,
@@ -274,11 +289,11 @@ __global__ void raycastKernel( unsigned char* const outputImage, int width, int 
                 for( int i = 0; i < lightNum; ++i )
                 {
                     shadowPct = 0;
-                    shadowPct =  shadowTest( &shiftP, &surfaceNormal, primitives+2, primitiveNum-2, lights+i, state );
+                    color  +=  shadowTest( &shiftP, &surfaceNormal, &ray, primitives+2, primitiveNum-2, &mtl, lights+i, state );
 
                     //sahding
                     //if( shadowPct ==0 )
-                      color += (1.0f-shadowPct)*shade( &incidentP, &surfaceNormal, &ray, &primitives[hitId], &mtl, lights+i );
+                      //color += (1.0f-shadowPct)*shade( &incidentP, &surfaceNormal, &ray, &mtl, lights+i );
                 }
             }
             color += mtl.ambient + mtl.emission;

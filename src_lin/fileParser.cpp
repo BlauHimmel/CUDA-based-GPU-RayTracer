@@ -21,7 +21,7 @@ using namespace glm;
 
 // Function to read the input data values
 // Use is optional, but should be very helpful in parsing.  
-bool readvals(stringstream &s, const int numvals, float* values) 
+bool floatParse(stringstream &s, const int numvals, float* values) 
 {
     for (int i = 0; i < numvals; i++) {
         s>>values[i]; 
@@ -34,7 +34,7 @@ bool readvals(stringstream &s, const int numvals, float* values)
     return true; 
 }
 
-bool readstr( stringstream &s, const int numvals, string* str )
+bool stringParse( stringstream &s, const int numvals, string* str )
 {
     for( int i = 0; i < numvals; i++ )
     {
@@ -113,7 +113,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
 
         if( itemName == "camera" )
         {
-            if( readvals( lineSStr, 10, param ) )
+            if( floatParse( lineSStr, 10, param ) )
             {
                 sceneDesc.eyePos = vec3( param[0], param[1], param[2] );
                 sceneDesc.eyePosHomo = vec4( param[0], param[1], param[2], 1.0f );
@@ -129,7 +129,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if( itemName == "size" )
         {
-            if( readvals( lineSStr, 2, param ) )
+            if( floatParse( lineSStr, 2, param ) )
             {
                 sceneDesc.width = param[0];
                 sceneDesc.height = param[1];
@@ -137,7 +137,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if( itemName == "maxdepth" )
         {
-            if( readvals( lineSStr, 1, param ) )
+            if( floatParse( lineSStr, 1, param ) )
             {
                 sceneDesc.rayDepth = param[0];
             }
@@ -149,7 +149,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if( itemName == "mtl" )
         {
-            if( readvals( lineSStr, 13, param ) )// emission ambient diffuse specular shininess
+            if( floatParse( lineSStr, 13, param ) )// emission ambient diffuse specular shininess
             {
                 Material mtl;
                 mtl.emission = vec3( param[0], param[1], param[2] );
@@ -162,7 +162,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if( itemName == "directional" || itemName == "point" )
         {
-            if( readvals( lineSStr, 6, param ) )
+            if( floatParse( lineSStr, 6, param ) )
             {
                 Light light;
                 light.pos = vec4( param[0], param[1], param[2], 1 );
@@ -188,7 +188,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if(  itemName == "area"  ) //area light
         {
-            if( readvals( lineSStr, 10, param ) )
+            if( floatParse( lineSStr, 10, param ) )
             {
                 Light light;
                 light.type = 2;
@@ -210,7 +210,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if( itemName == "attenuation" )
         {
-            if( readvals( lineSStr, 3, param ) )
+            if( floatParse( lineSStr, 3, param ) )
             {
                 attenu_const = param[0];
                 attenu_linear = param[1];
@@ -220,7 +220,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if( itemName == "translate" )
         {
-            if( readvals( lineSStr, 3, param ) )
+            if( floatParse( lineSStr, 3, param ) )
             {
                 mat4 m = Transform::translate( param[0], param[1], param[2] ) ;
                 rightmultiply( m, transtack );
@@ -228,7 +228,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if( itemName == "rotate" )
         {
-            if( readvals( lineSStr, 4, param ) )
+            if( floatParse( lineSStr, 4, param ) )
             {
                 mat3 m = Transform::rotate( param[3], vec3( param[0], param[1], param[2] ) ) ;
                 mat4 m4x4 = mat4( m );
@@ -237,7 +237,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if( itemName == "scale" )
         {
-            if( readvals( lineSStr, 3, param ) )
+            if( floatParse( lineSStr, 3, param ) )
             {
                 mat4 m = Transform::scale( param[0], param[1], param[2] ) ;
                 rightmultiply( m, transtack );
@@ -256,7 +256,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if( itemName == "sphere" )
         {
-            if( readvals( lineSStr, 4, param ) )
+            if( floatParse( lineSStr, 4, param ) )
             {
                 Sphere *pSphere = new Sphere();
                 pSphere->center = vec4( param[0], param[1], param[2], 1.0 );
@@ -264,14 +264,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
 
                 pSphere->center = transtack.back() * pSphere->center;
                 pSphere->radius *= transtack.back()[0][0];
-                //pSphere->transform = transtack.back();
-                //pSphere->invTrans = inverse( pSphere->transform );
 
-                //pSphere->shininess = shininess;
-                //pSphere->emission = emission;
-                //pSphere->diffuse = diffuse;
-                //pSphere->specular = specular;
-                //pSphere->ambient = ambient;
                 pSphere->mtl_idx = sceneDesc.mtls.size() - 1;
 
                 sceneDesc.primitives.push_back(pSphere);
@@ -292,7 +285,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         {
             if( maxvert == 0 ) //No vertices, skip the parsing
                 continue;
-            if( readvals( lineSStr, 3, param ) )
+            if( floatParse( lineSStr, 3, param ) )
             {
                 vec3 vertex( param[0], param[1], param[2] );
                 vertices.push_back( vertex );
@@ -303,7 +296,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         {
             if( maxnorm == 0 ) //No vertices, skip the parsing
                 continue;
-            if( readvals( lineSStr, 6, param ) )
+            if( floatParse( lineSStr, 6, param ) )
             {
                 vec3 vertex( param[0], param[1], param[2] );
                 vec3 normal( param[3], param[4], param[5] );
@@ -314,34 +307,27 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if( itemName == "tri" )
         {
-           if( readvals( lineSStr, 3, param ) )
+           if( floatParse( lineSStr, 3, param ) )
            {
                Triangle *pTri = new Triangle();
-               //pTri->v[0] = vertices[ (int)param[0] ];
-               //pTri->v[1] = vertices[ (int)param[1] ];
-               //pTri->v[2] = vertices[ (int)param[2] ];
+
                pTri->v[0] = vec3( transtack.back() * vec4( vertices[ (int)param[0] ], 1 ) );
                pTri->v[1] = vec3( transtack.back() * vec4( vertices[ (int)param[1] ], 1 ) );
                pTri->v[2] = vec3( transtack.back() * vec4( vertices[ (int)param[2] ], 1 ) );
                //calculate plane normal
                pTri->pn = normalize( cross( pTri->v[1] - pTri->v[0], pTri->v[2] - pTri->v[0] ) );
 
-               //pTri->diffuse = diffuse;
-               //pTri->emission = emission;
-               //pTri->specular = specular;
-               //pTri->shininess = shininess;
-               //pTri->ambient = ambient;
+
                pTri->mtl_idx = sceneDesc.mtls.size() - 1;
 
-               //pTri->transform = transtack.back();
-               //pTri->invTrans = transpose( inverse( pTri->transform ) )
+
 
                sceneDesc.primitives.push_back( pTri );
            }
         }
         else if( itemName == "trinormal" )
         {
-           if( readvals( lineSStr, 6, param ) )
+           if( floatParse( lineSStr, 6, param ) )
            {
                Triangle *pTri = new Triangle();
 
@@ -349,15 +335,10 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                pTri->v[1] = vec3( transtack.back() * vec4( vertices[ (int)param[1] ], 1 ) );
                pTri->v[2] = vec3( transtack.back() * vec4( vertices[ (int)param[2] ], 1 ) );
                pTri->pn = normalize( cross( pTri->v[1] - pTri->v[0], pTri->v[2] - pTri->v[0] ) );
-               //mat3 normalMat= mat3( transpose( inverse( pTri->transform ) ) ); //normal matrix 
-               //pTri->n[0] = normalMat * vertnorms[ 2*(int)param[0]+1 ];
-               //pTri->n[1] = normalMat * vertnorms[ 2*(int)param[1]+1 ];
-               //pTri->n[2] = normalMat * vertnorms[ 2*(int)param[2]+1 ];
 
 
                pTri->mtl_idx = sceneDesc.mtls.size() - 1;
-               //pTri->transform = transtack.back();
-               //pTri->invTrans = transpose( inverse( pTri->transform ) );
+
 
                sceneDesc.primitives.push_back( pTri );
               
@@ -366,7 +347,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         else if( itemName == "model" )
         {
            // string modelName;
-            if( readstr( lineSStr, 1, &modelName ) )
+            if( stringParse( lineSStr, 1, &modelName ) )
             {
                 model = sceneDesc.model[sceneDesc.modelCount] = glmReadOBJ( const_cast<char*>(modelName.c_str()) );
                 if( sceneDesc.model[sceneDesc.modelCount] != NULL )
@@ -394,20 +375,9 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                             pTri->v[2] = vec3( transform * vec4( model->vertices[ 3 * triangle->vindices[2]],
                                                                  model->vertices[ 3 * triangle->vindices[2]+1],
                                                                  model->vertices[ 3 * triangle->vindices[2]+2], 1) );
-
-                            //pTri->n[0] = vec3( model->normals[ 3 * triangle->nindices[0] ], 
-                            //                   model->normals[ 3 * triangle->nindices[0]+1 ],
-                            //                   model->normals[ 3 * triangle->nindices[0]+2 ] );
-                            //pTri->n[1] = vec3( model->normals[ 3 * triangle->nindices[1] ], 
-                            //                   model->normals[ 3 * triangle->nindices[1]+1 ],
-                            //                   model->normals[ 3 * triangle->nindices[1]+2 ] );
-                            //pTri->n[2] = vec3( model->normals[ 3 * triangle->nindices[2] ], 
-                            //                   model->normals[ 3 * triangle->nindices[2]+1 ],
-                            //                   model->normals[ 3 * triangle->nindices[2]+2 ] );
                             pTri->pn = normalize( cross( pTri->v[0] - pTri->v[1], pTri->v[0] - pTri->v[2] ) );     
                             pTri->mtl_idx = sceneDesc.mtls.size() - 1;
-                            //pTri->transform = transtack.back();
-                            //pTri->invTrans = inverse( pTri->transform );
+
 
                             sceneDesc.primitives.push_back( pTri );
                         }

@@ -1,12 +1,7 @@
-// Transform.cpp: implementation of the Transform class.
 
-// Note: when you construct a matrix using mat4() or mat3(), it will be COLUMN-MAJOR
-// Keep this in mind in readfile.cpp and display.cpp
-// See FAQ for more details or if you're having problems.
 
 #include "Transform.h"
-
-// Helper rotation function.  Please implement this.  
+ 
 mat3 Transform::rotate(const float degrees, const vec3& axis) 
 {
   mat3 r_mat;
@@ -73,8 +68,7 @@ mat4 Transform::lookAt(const vec3 &eye, const vec3 &center, const vec3 &up)
 mat4 Transform::perspective(float fovy, float aspect, float zNear, float zFar)
 {
     mat4 ret;
-    // YOUR CODE FOR HW2 HERE
-    // New, to implement the perspective transform as well.  
+
     float vFOV_rad = fovy * pi / 180.0f;
 
     //Construct the projection matrix
@@ -88,8 +82,7 @@ mat4 Transform::perspective(float fovy, float aspect, float zNear, float zFar)
 mat4 Transform::scale(const float &sx, const float &sy, const float &sz) 
 {
     mat4 ret;
-    // YOUR CODE FOR HW2 HERE
-    // Implement scaling 
+
     ret[0] = vec4( sx, 0, 0, 0 );
     ret[1] = vec4( 0, sy, 0, 0 );
     ret[2] = vec4( 0, 0, sz, 0 );
@@ -100,8 +93,7 @@ mat4 Transform::scale(const float &sx, const float &sy, const float &sz)
 mat4 Transform::translate(const float &tx, const float &ty, const float &tz) 
 {
     mat4 ret;
-    // YOUR CODE FOR HW2 HERE
-    // Implement translation 
+
     ret[0] = vec4( 1, 0, 0, 0 );
     ret[1] = vec4( 0, 1, 0, 0 );
     ret[2] = vec4( 0, 0, 1, 0 );
@@ -109,11 +101,7 @@ mat4 Transform::translate(const float &tx, const float &ty, const float &tz)
     return ret;
 }
 
-// To normalize the up direction and construct a coordinate frame.  
-// As discussed in the lecture.  May be relevant to create a properly 
-// orthogonal and normalized up. 
-// This function is provided as a helper, in case you want to use it. 
-// Using this function (in readfile.cpp or display.cpp) is optional.  
+
 
 vec3 Transform::upvector(const vec3 &up, const vec3 & zvec) 
 {
