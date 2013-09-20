@@ -21,10 +21,12 @@ public:
 
     glm::mat4 transform;
     glm::mat4 invTrans;
-    glm::vec3 diffuse;
-    glm::vec3 specular;
-    glm::vec3 emission;
-    glm::vec3 ambient;
-    float shininess;
+    //glm::vec3 diffuse;
+    //glm::vec3 specular;
+    //glm::vec3 emission;
+    //glm::vec3 ambient;
+    //float shininess;
+    unsigned short mtl_idx;
+    unsigned short transform_idx;
 };
 

@@ -71,6 +71,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
     //stringstream lineSStr;
     char lineBuf[256];
     float param[40];
+    string modelName;
 
     vec3 diffuse(0.0f);
     vec3 specular(0.0f);
@@ -87,6 +88,8 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
     int maxnorm = 0;
     vector<vec3> vertices;  //vertices without normal vectors
     vector<vec3> vertnorms; //vertices with normal vectors
+
+    GLMmodel* model;
 
     transtack.push_back( mat4(1.0) );
     
@@ -148,35 +151,13 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         {
             if( readvals( lineSStr, 13, param ) )// emission ambient diffuse specular shininess
             {
-
-            }
-        }
-        else if( itemName == "diffuse" )
-        {
-            if( readvals( lineSStr, 3, param ) )
-            {
-                diffuse = vec3( param[0], param[1], param[2] );
-            }
-        }
-        else if( itemName == "specular" )
-        {
-            if( readvals( lineSStr, 3, param ) )
-            {
-                specular = vec3( param[0], param[1], param[2] );
-            }
-        }
-        else if( itemName == "shininess" )
-        {
-            if( readvals( lineSStr, 1, param ) )
-            {
-                shininess = param[0];
-            }
-        }
-        else if( itemName == "emission" )
-        {
-            if( readvals( lineSStr, 3, param ) )
-            {
-                emission = vec3( param[0], param[1], param[2] );
+                Material mtl;
+                mtl.emission = vec3( param[0], param[1], param[2] );
+                mtl.ambient = vec3( param[3], param[4], param[5] );
+                mtl.diffuse = vec3( param[6], param[7], param[8] );
+                mtl.specular = vec3( param[9], param[10], param[11] );
+                mtl.shininess = param[12];
+                sceneDesc.mtls.push_back( mtl );
             }
         }
         else if( itemName == "directional" || itemName == "point" )
@@ -224,14 +205,6 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                 light.attenu_linear = attenu_linear;
                 light.attenu_quadratic = attenu_quadratic;
                 sceneDesc.lights.push_back( light );
-
-            }
-        }
-        else if( itemName == "ambient" )
-        {
-            if( readvals( lineSStr, 3, param ) )
-            {
-                sceneDesc.ambient = ambient = vec3( param[0], param[1], param[2] ) ;
 
             }
         }
@@ -292,11 +265,12 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                 pSphere->transform = transtack.back();
                 pSphere->invTrans = inverse( pSphere->transform );
 
-                pSphere->shininess = shininess;
-                pSphere->emission = emission;
-                pSphere->diffuse = diffuse;
-                pSphere->specular = specular;
-                pSphere->ambient = ambient;
+                //pSphere->shininess = shininess;
+                //pSphere->emission = emission;
+                //pSphere->diffuse = diffuse;
+                //pSphere->specular = specular;
+                //pSphere->ambient = ambient;
+                pSphere->mtl_idx = sceneDesc.mtls.size() - 1;
 
                 sceneDesc.primitives.push_back(pSphere);
              
@@ -353,11 +327,12 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                pTri->vv[1] = vec4( vertices[ (int)param[1] ], 1 );
                pTri->vv[2] = vec4( vertices[ (int)param[2] ], 1 );
 
-               pTri->diffuse = diffuse;
-               pTri->emission = emission;
-               pTri->specular = specular;
-               pTri->shininess = shininess;
-               pTri->ambient = ambient;
+               //pTri->diffuse = diffuse;
+               //pTri->emission = emission;
+               //pTri->specular = specular;
+               //pTri->shininess = shininess;
+               //pTri->ambient = ambient;
+               pTri->mtl_idx = sceneDesc.mtls.size() - 1;
 
                pTri->transform = transtack.back();
                pTri->invTrans = inverse( pTri->transform );
@@ -383,11 +358,12 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                pTri->n[1] = vertnorms[ 2*(int)param[1]+1 ];
                pTri->n[2] = vertnorms[ 2*(int)param[2]+1 ];
 
-               pTri->diffuse = diffuse;
-               pTri->emission = emission;
-               pTri->specular = specular;
-               pTri->shininess = shininess;
+               //pTri->diffuse = diffuse;
+               //pTri->emission = emission;
+               //pTri->specular = specular;
+               //pTri->shininess = shininess;
 
+               pTri->mtl_idx = sceneDesc.mtls.size() - 1;
                pTri->transform = transtack.back();
                pTri->invTrans = inverse( pTri->transform );
 
@@ -397,7 +373,54 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
         }
         else if( itemName == "model" )
         {
-            string modelName;
+           // string modelName;
+            if( readstr( lineSStr, 1, &modelName ) )
+            {
+                model = sceneDesc.model[sceneDesc.modelCount] = glmReadOBJ( const_cast<char*>(modelName.c_str()) );
+                if( sceneDesc.model[sceneDesc.modelCount] != NULL )
+                {
+                    sceneDesc.modelCount+=1;
+                    glmUnitize( model );
+                    //parse triangles
+                    GLMgroup* group = model->groups;
+			        while( group )
+                    {
+                        GLMtriangle* triangle;
+                        Triangle *pTri = new Triangle();
+                        for( int i = 0; i < group->numtriangles; ++i )
+                        {
+                            triangle = &model->triangles[group->triangles[i]];
+
+                            pTri->v[0] = vec3( model->vertices[ 3 * triangle->vindices[0]],
+                                               model->vertices[ 3 * triangle->vindices[0]+1],
+                                               model->vertices[ 3 * triangle->vindices[0]+2] );
+                            pTri->v[1] = vec3( model->vertices[ 3 * triangle->vindices[1]],
+                                               model->vertices[ 3 * triangle->vindices[1]+1],
+                                               model->vertices[ 3 * triangle->vindices[1]+2] );
+                            pTri->v[2] = vec3( model->vertices[ 3 * triangle->vindices[2]],
+                                               model->vertices[ 3 * triangle->vindices[2]+1],
+                                               model->vertices[ 3 * triangle->vindices[2]+2] );
+
+                            pTri->n[0] = vec3( model->normals[ 3 * triangle->nindices[0] ], 
+                                               model->normals[ 3 * triangle->nindices[0]+1 ],
+                                               model->normals[ 3 * triangle->nindices[0]+2 ] );
+                            pTri->n[1] = vec3( model->normals[ 3 * triangle->nindices[1] ], 
+                                               model->normals[ 3 * triangle->nindices[1]+1 ],
+                                               model->normals[ 3 * triangle->nindices[1]+2 ] );
+                            pTri->n[2] = vec3( model->normals[ 3 * triangle->nindices[2] ], 
+                                               model->normals[ 3 * triangle->nindices[2]+1 ],
+                                               model->normals[ 3 * triangle->nindices[2]+2 ] );
+                            pTri->pn = normalize( cross( pTri->v[1] - pTri->v[0], pTri->v[2] - pTri->v[0] ) );     
+                            pTri->mtl_idx = sceneDesc.mtls.size() - 1;
+                            pTri->transform = transtack.back();
+                            pTri->invTrans = inverse( pTri->transform );
+
+                            sceneDesc.primitives.push_back( pTri );
+                        }
+                        group = group->next;
+                    }
+                }
+            }
         }
     }
 

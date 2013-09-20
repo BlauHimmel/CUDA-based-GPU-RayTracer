@@ -4,6 +4,7 @@ SceneDesc::SceneDesc(void)
 {
     width = 0;
     height = 0;
+    modelCount = 0;
     this->rayDepth = 5;
 }
 
@@ -21,4 +22,7 @@ SceneDesc::~SceneDesc(void)
         primitives.pop_back();
 
     }
+
+    for( int i = 0; i < modelCount; ++i )
+        glmDelete( model[i] );
 }

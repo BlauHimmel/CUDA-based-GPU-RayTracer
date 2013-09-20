@@ -96,8 +96,8 @@ __device__ glm::vec3 shade( glm::vec3* point, glm::vec3* normal, glm::vec3* eyeR
 
     H = glm::normalize( L - *eyeRay );
     color = light->color   *
-                ( primitive->diffuse * fmaxf( glm::dot( *normal, L ), 0.0f ) +
-                primitive->specular * powf( fmaxf( glm::dot( *normal, H ), 0.0f ), primitive->shininess ) );
+                ( mtl->diffuse * fmaxf( glm::dot( *normal, L ), 0.0f ) +
+                mtl->specular * powf( fmaxf( glm::dot( *normal, H ), 0.0f ), mtl->shininess ) );
 
 
     return color;
@@ -242,7 +242,7 @@ __device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primiti
 
 __global__ void raycast( unsigned char* const outputImage, int width, int height, _CameraData cameraData,
                          const _Primitive* const primitives, int primitiveNum,
-                         const _Light* const lights, int lightNum, _Material* mtl, int mtlNum )
+                         const _Light* const lights, int lightNum, _Material* mtls, int mtlNum )
 {
     
     ushort2 idx;
@@ -257,7 +257,8 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
     glm::vec3 cumulativeSpecular( 1.0f, 1.0f, 1.0f );
     int hitId;
     float shadowPct;
-   
+    _Material mtl;
+
     int outIdx;
 
     //generate ray based on block and thread idx
@@ -282,6 +283,7 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
         hitId = raytrace( &ray,&raysource, primitives, primitiveNum, lights, lightNum, &incidentP, &surfaceNormal );
         if( hitId >= 0 )
         {
+            mtl = mtls[primitives[hitId].mtl_id];
             shiftP = incidentP +  (0.001f * surfaceNormal);
             for( int i = 0; i < lightNum; ++i )
             {
@@ -289,20 +291,23 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
 
                 //sahding
                 //if( shadowPct ==0 )
-                  color += (1.0f-shadowPct)*shade( &incidentP, &surfaceNormal, &ray, &primitives[hitId], 0, lights+i );
+                  color += (1.0f-shadowPct)*shade( &incidentP, &surfaceNormal, &ray, &primitives[hitId], &mtl, lights+i );
             }
-            color += primitives[hitId].ambient + primitives[hitId].emission;
+            color += mtl.ambient + mtl.emission;
     
         
-        }
-        finalColor += color * cumulativeSpecular;
         
-        if( glm::all(glm::equal(primitives[hitId].specular, glm::vec3(0.0f,0.0f,0.0f) ) ) )
-            break;
+            finalColor += color * cumulativeSpecular;
+        
+            if( glm::all(glm::equal(mtl.specular, glm::vec3(0.0f,0.0f,0.0f) ) ) )
+                break;
 
-        ray = glm::normalize( glm::reflect( ray, surfaceNormal ) );
-        raysource = shiftP;
-        cumulativeSpecular *= primitives[hitId].specular;
+            ray = glm::normalize( glm::reflect( ray, surfaceNormal ) );
+            raysource = shiftP;
+            cumulativeSpecular *= mtl.specular;
+        }
+        else
+            break;
     }
     //write color to output buffer
     outputImage[ outIdx ] = finalColor.x > 1 ? 255 : finalColor.x * 255;

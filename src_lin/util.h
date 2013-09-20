@@ -37,14 +37,7 @@ typedef struct _Primitive
     glm::mat4 transform;
     glm::mat4 invTrans;
 
-    //temporary
-    glm::vec3 diffuse;
-    glm::vec3 specular;
-    glm::vec3 emission;
-    glm::vec3 ambient;
-    float shininess;
-
-    //unsigned short material_id;
+    unsigned short mtl_id;
 }_Primitive;
 
 typedef struct _Light

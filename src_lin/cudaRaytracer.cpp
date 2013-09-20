@@ -34,26 +34,7 @@ CudaRayTracer::~CudaRayTracer()
 
 void CudaRayTracer::renderImage( cudaGraphicsResource* pboResource )
 {
-    //if( scene.width < 1 || scene.height < 1 )
-    //    return;
 
-    //h_outputImage = new unsigned char[3*scene.width*scene.height];
-    //memset( h_outputImage, 0, 3*scene.width*scene.height );
-
-    ////Pack scene description data
-    //packSceneDescData( scene );
-
-    ////allocate memory in the device
-    //cudaErrorCheck( cudaMalloc( &d_outputImage, sizeof(unsigned char)*3*scene.width*scene.height ) );
-    //cudaErrorCheck( cudaMalloc( &d_primitives, sizeof( _Primitive ) * numPrimitive ) );
-    //cudaErrorCheck( cudaMalloc( &d_lights, sizeof( _Light ) * numLight ) );
-    //cudaErrorCheck( cudaMalloc( &d_materials, sizeof( _Material ) * numMaterial ) );
-
-    ////Send scene description data to the device
-    //cudaErrorCheck( cudaMemcpy( (void*)d_primitives, h_pPrimitives, sizeof( _Primitive ) * numPrimitive, cudaMemcpyHostToDevice) );
-    //cudaErrorCheck( cudaMemcpy( (void*)d_lights, h_pLights, sizeof( _Light ) * numLight , cudaMemcpyHostToDevice ) );
-    //cudaErrorCheck( cudaMemcpy( (void*)d_materials, h_pMaterials, sizeof( _Material ) * numMaterial , cudaMemcpyHostToDevice ) );
-    //cudaErrorCheck( cudaMemset( (void*)d_outputImage, 0, sizeof(unsigned char)*3*scene.width*scene.height ) );
 
     cudaErrorCheck( cudaGraphicsMapResources( 1, &pboResource, 0 ) );
     cudaErrorCheck( cudaGraphicsResourceGetMappedPointer((void**) &d_outputImage, &pboSize, pboResource ) );
@@ -68,23 +49,7 @@ void CudaRayTracer::renderImage( cudaGraphicsResource* pboResource )
 
     cudaErrorCheck( cudaGraphicsUnmapResources( 1, &pboResource, 0 ) );
 
-    ////Read back the image
-    //cudaErrorCheck( cudaMemcpy( h_outputImage, d_outputImage, sizeof(unsigned char)*3*scene.width*scene.height, cudaMemcpyDeviceToHost ) );
-    //std::cout<<"Kernel running time: "<<timer.Elapsed()<<" ms.\n";
-    //Pixel pxColor;
-    ////clear ColorImage buffer with black
-    //pxColor.R = pxColor.G = pxColor.B = 0;
-    //img.clear(pxColor );
-    ////ouput color 
-    //for( int h = 0; h < scene.height; ++h )
-    //    for( int w = 0; w < scene.width; ++w )
-    //    {
-    //        pxColor.R = h_outputImage[3*h*scene.width+3*w];
-    //        pxColor.G = h_outputImage[3*h*scene.width+3*w+1];
-    //        pxColor.B = h_outputImage[3*h*scene.width+3*w+2];
-    //        img.writePixel( w, h, pxColor );
-    //    }
-    //cleanUp();
+
     
 }
 
@@ -108,7 +73,7 @@ void CudaRayTracer::packSceneDescData( const SceneDesc &sceneDesc )
     numPrimitive = sceneDesc.primitives.size();
     h_pPrimitives = new _Primitive[ numPrimitive ]; 
 
-    for( int i = 0; i < sceneDesc.primitives.size(); ++i )
+    for( int i = 0; i < 65/*sceneDesc.primitives.size()*/; ++i )
     {
         if( sceneDesc.primitives[i]->toString().compare("sphere") == 0 )
         {
@@ -130,10 +95,7 @@ void CudaRayTracer::packSceneDescData( const SceneDesc &sceneDesc )
         }
         h_pPrimitives[i].transform = sceneDesc.primitives[i]->transform;
         h_pPrimitives[i].invTrans = sceneDesc.primitives[i]->invTrans;
-        h_pPrimitives[i].diffuse = sceneDesc.primitives[i]->diffuse;
-        h_pPrimitives[i].specular = sceneDesc.primitives[i]->specular;
-        h_pPrimitives[i].ambient = sceneDesc.primitives[i]->ambient;
-        h_pPrimitives[i].shininess = sceneDesc.primitives[i]->shininess;
+        h_pPrimitives[i].mtl_id = sceneDesc.primitives[i]->mtl_idx;
     }
 
     //pack light sources
@@ -150,6 +112,18 @@ void CudaRayTracer::packSceneDescData( const SceneDesc &sceneDesc )
         h_pLights[i].type = sceneDesc.lights[i].type;
         h_pLights[i].normal = sceneDesc.lights[i].normal;
         h_pLights[i].width = sceneDesc.lights[i].width;
+    }
+
+    //pack materails 
+    numMaterial = sceneDesc.mtls.size();
+    h_pMaterials = new _Material[ numMaterial ];
+    for( int i = 0; i < numMaterial; ++i )
+    {
+        h_pMaterials[i].ambient = sceneDesc.mtls[i].ambient;
+        h_pMaterials[i].emission = sceneDesc.mtls[i].emission;
+        h_pMaterials[i].diffuse = sceneDesc.mtls[i].diffuse;
+        h_pMaterials[i].specular = sceneDesc.mtls[i].specular;
+        h_pMaterials[i].shininess = sceneDesc.mtls[i].shininess;
     }
 }
 
