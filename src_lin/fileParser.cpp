@@ -262,8 +262,10 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                 pSphere->center = vec4( param[0], param[1], param[2], 1.0 );
                 pSphere->radius = param[3];
 
-                pSphere->transform = transtack.back();
-                pSphere->invTrans = inverse( pSphere->transform );
+                pSphere->center = transtack.back() * pSphere->center;
+                pSphere->radius *= transtack.back()[0][0];
+                //pSphere->transform = transtack.back();
+                //pSphere->invTrans = inverse( pSphere->transform );
 
                 //pSphere->shininess = shininess;
                 //pSphere->emission = emission;
@@ -315,17 +317,14 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
            if( readvals( lineSStr, 3, param ) )
            {
                Triangle *pTri = new Triangle();
-               pTri->v[0] = vertices[ (int)param[0] ];
-               pTri->v[1] = vertices[ (int)param[1] ];
-               pTri->v[2] = vertices[ (int)param[2] ];
-
+               //pTri->v[0] = vertices[ (int)param[0] ];
+               //pTri->v[1] = vertices[ (int)param[1] ];
+               //pTri->v[2] = vertices[ (int)param[2] ];
+               pTri->v[0] = vec3( transtack.back() * vec4( vertices[ (int)param[0] ], 1 ) );
+               pTri->v[1] = vec3( transtack.back() * vec4( vertices[ (int)param[1] ], 1 ) );
+               pTri->v[2] = vec3( transtack.back() * vec4( vertices[ (int)param[2] ], 1 ) );
                //calculate plane normal
                pTri->pn = normalize( cross( pTri->v[1] - pTri->v[0], pTri->v[2] - pTri->v[0] ) );
-
-               //Homogenuous coordinate representation
-               pTri->vv[0] = vec4( vertices[ (int)param[0] ], 1 );
-               pTri->vv[1] = vec4( vertices[ (int)param[1] ], 1 );
-               pTri->vv[2] = vec4( vertices[ (int)param[2] ], 1 );
 
                //pTri->diffuse = diffuse;
                //pTri->emission = emission;
@@ -334,8 +333,8 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                //pTri->ambient = ambient;
                pTri->mtl_idx = sceneDesc.mtls.size() - 1;
 
-               pTri->transform = transtack.back();
-               pTri->invTrans = inverse( pTri->transform );
+               //pTri->transform = transtack.back();
+               //pTri->invTrans = transpose( inverse( pTri->transform ) )
 
                sceneDesc.primitives.push_back( pTri );
            }
@@ -346,26 +345,19 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
            {
                Triangle *pTri = new Triangle();
 
-               pTri->v[0] = vertices[ (int)param[0] ];
-               pTri->v[1] = vertices[ (int)param[1] ];
-               pTri->v[2] = vertices[ (int)param[2] ];
+               pTri->v[0] = vec3( transtack.back() * vec4( vertices[ (int)param[0] ], 1 ) );
+               pTri->v[1] = vec3( transtack.back() * vec4( vertices[ (int)param[1] ], 1 ) );
+               pTri->v[2] = vec3( transtack.back() * vec4( vertices[ (int)param[2] ], 1 ) );
+               pTri->pn = normalize( cross( pTri->v[1] - pTri->v[0], pTri->v[2] - pTri->v[0] ) );
+               //mat3 normalMat= mat3( transpose( inverse( pTri->transform ) ) ); //normal matrix 
+               //pTri->n[0] = normalMat * vertnorms[ 2*(int)param[0]+1 ];
+               //pTri->n[1] = normalMat * vertnorms[ 2*(int)param[1]+1 ];
+               //pTri->n[2] = normalMat * vertnorms[ 2*(int)param[2]+1 ];
 
-               pTri->vv[0] = vec4( vertnorms[ 2*(int)param[0] ], 1 );
-               pTri->vv[1] = vec4( vertnorms[ 2*(int)param[1] ], 1 );
-               pTri->vv[2] = vec4( vertnorms[ 2*(int)param[2] ], 1 );
-
-               pTri->n[0] = vertnorms[ 2*(int)param[0]+1 ];
-               pTri->n[1] = vertnorms[ 2*(int)param[1]+1 ];
-               pTri->n[2] = vertnorms[ 2*(int)param[2]+1 ];
-
-               //pTri->diffuse = diffuse;
-               //pTri->emission = emission;
-               //pTri->specular = specular;
-               //pTri->shininess = shininess;
 
                pTri->mtl_idx = sceneDesc.mtls.size() - 1;
-               pTri->transform = transtack.back();
-               pTri->invTrans = inverse( pTri->transform );
+               //pTri->transform = transtack.back();
+               //pTri->invTrans = transpose( inverse( pTri->transform ) );
 
                sceneDesc.primitives.push_back( pTri );
               
@@ -379,6 +371,7 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                 model = sceneDesc.model[sceneDesc.modelCount] = glmReadOBJ( const_cast<char*>(modelName.c_str()) );
                 if( sceneDesc.model[sceneDesc.modelCount] != NULL )
                 {
+                    mat4 transform = transtack.back();
                     sceneDesc.modelCount+=1;
                     glmUnitize( model );
                     //parse triangles
@@ -389,31 +382,32 @@ int FileParser::parse( const char input[], SceneDesc& sceneDesc )
                         Triangle *pTri = new Triangle();
                         for( int i = 0; i < group->numtriangles; ++i )
                         {
+                            Triangle *pTri = new Triangle();
                             triangle = &model->triangles[group->triangles[i]];
 
-                            pTri->v[0] = vec3( model->vertices[ 3 * triangle->vindices[0]],
-                                               model->vertices[ 3 * triangle->vindices[0]+1],
-                                               model->vertices[ 3 * triangle->vindices[0]+2] );
-                            pTri->v[1] = vec3( model->vertices[ 3 * triangle->vindices[1]],
-                                               model->vertices[ 3 * triangle->vindices[1]+1],
-                                               model->vertices[ 3 * triangle->vindices[1]+2] );
-                            pTri->v[2] = vec3( model->vertices[ 3 * triangle->vindices[2]],
-                                               model->vertices[ 3 * triangle->vindices[2]+1],
-                                               model->vertices[ 3 * triangle->vindices[2]+2] );
+                            pTri->v[0] = vec3( transform * vec4( model->vertices[ 3 * triangle->vindices[0]],
+                                                                 model->vertices[ 3 * triangle->vindices[0]+1],
+                                                                 model->vertices[ 3 * triangle->vindices[0]+2], 1) );
+                            pTri->v[1] = vec3( transform * vec4( model->vertices[ 3 * triangle->vindices[1]],
+                                                                 model->vertices[ 3 * triangle->vindices[1]+1],
+                                                                 model->vertices[ 3 * triangle->vindices[1]+2], 1) );
+                            pTri->v[2] = vec3( transform * vec4( model->vertices[ 3 * triangle->vindices[2]],
+                                                                 model->vertices[ 3 * triangle->vindices[2]+1],
+                                                                 model->vertices[ 3 * triangle->vindices[2]+2], 1) );
 
-                            pTri->n[0] = vec3( model->normals[ 3 * triangle->nindices[0] ], 
-                                               model->normals[ 3 * triangle->nindices[0]+1 ],
-                                               model->normals[ 3 * triangle->nindices[0]+2 ] );
-                            pTri->n[1] = vec3( model->normals[ 3 * triangle->nindices[1] ], 
-                                               model->normals[ 3 * triangle->nindices[1]+1 ],
-                                               model->normals[ 3 * triangle->nindices[1]+2 ] );
-                            pTri->n[2] = vec3( model->normals[ 3 * triangle->nindices[2] ], 
-                                               model->normals[ 3 * triangle->nindices[2]+1 ],
-                                               model->normals[ 3 * triangle->nindices[2]+2 ] );
-                            pTri->pn = normalize( cross( pTri->v[1] - pTri->v[0], pTri->v[2] - pTri->v[0] ) );     
+                            //pTri->n[0] = vec3( model->normals[ 3 * triangle->nindices[0] ], 
+                            //                   model->normals[ 3 * triangle->nindices[0]+1 ],
+                            //                   model->normals[ 3 * triangle->nindices[0]+2 ] );
+                            //pTri->n[1] = vec3( model->normals[ 3 * triangle->nindices[1] ], 
+                            //                   model->normals[ 3 * triangle->nindices[1]+1 ],
+                            //                   model->normals[ 3 * triangle->nindices[1]+2 ] );
+                            //pTri->n[2] = vec3( model->normals[ 3 * triangle->nindices[2] ], 
+                            //                   model->normals[ 3 * triangle->nindices[2]+1 ],
+                            //                   model->normals[ 3 * triangle->nindices[2]+2 ] );
+                            pTri->pn = normalize( cross( pTri->v[0] - pTri->v[1], pTri->v[0] - pTri->v[2] ) );     
                             pTri->mtl_idx = sceneDesc.mtls.size() - 1;
-                            pTri->transform = transtack.back();
-                            pTri->invTrans = inverse( pTri->transform );
+                            //pTri->transform = transtack.back();
+                            //pTri->invTrans = inverse( pTri->transform );
 
                             sceneDesc.primitives.push_back( pTri );
                         }

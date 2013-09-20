@@ -33,6 +33,9 @@ private:
     int numMaterial;
 
     unsigned char* d_outputImage;
+    float* d_posBuffer;
+    float* d_normalBuffer;
+
     unsigned char* h_outputImage;
     _Primitive* d_primitives;
     _Light* d_lights;

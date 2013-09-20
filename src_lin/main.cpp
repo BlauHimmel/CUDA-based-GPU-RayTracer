@@ -16,9 +16,9 @@ const char* IOFILES[6][2] = {
     "scene4-ambient.test", "scene4-ambient.ppm",
     "scene4-specular.test", "scene4-specular.ppm",
     "scene4-emission.test", "scene4-emission.ppm",
-    "scene4-diffuse.test", "scene4-diffuse.ppm",
+    "scene5.test", "scene5.ppm",
     "scene-diffuse-boxlight.test", "scene-diffuse-boxlight.ppm" ,
-    "scene7.test","scene7.test" 
+    "testScene.test","scene7.test" 
 };
 
 CudaRayTracer* cudaRayTracer = NULL;
@@ -28,7 +28,7 @@ int main( int argc, char* argv[] )
 {
     SceneDesc theScene;
     ColorImage outputImage;
-    FileParser::parse( IOFILES[4][0], theScene );
+    FileParser::parse( IOFILES[5][0], theScene );
 
     outputImage.init( theScene.width, theScene.height );
     win_w = theScene.width;

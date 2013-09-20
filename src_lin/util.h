@@ -31,11 +31,7 @@ typedef struct _Primitive
 
     //used for triangle type
     glm::vec3 vert[3];
-    glm::vec3 normal[3];
     glm::vec3 pn; //plane normal used when vertex normal not specified
-
-    glm::mat4 transform;
-    glm::mat4 invTrans;
 
     unsigned short mtl_id;
 }_Primitive;

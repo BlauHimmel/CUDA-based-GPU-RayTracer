@@ -110,42 +110,43 @@ __device__ int raytrace( const glm::vec3* const ray, const glm::vec3* const sour
     float nearest = FLOAT_INF;
     float dst;
     int   id = -1;
-    glm::vec3 rayLocalCoord;
-    glm::vec3 sourceLocalCoord;
+    int threadId = blockDim.y * threadIdx.y + threadIdx.x;
+    //glm::vec3 rayLocalCoord;
+    //glm::vec3 sourceLocalCoord;
     glm::vec3 tmpP, tmpN;
 
-    //__shared__ h_Primitive; 
 
     for( int i = 0; i < primitiveNum; ++i )
     {
+
         //transform ray to object coordinate
-        rayLocalCoord =  glm::normalize( glm::vec3( primitives[i].invTrans * glm::vec4( *ray, 0.0f ) ) );
-        sourceLocalCoord = glm::vec3( primitives[i].invTrans * glm::vec4( *source, 1.0f ) );
+        //rayLocalCoord =  glm::normalize( glm::vec3( primitives[i].invTrans * glm::vec4( *ray, 0.0f ) ) );
+        //sourceLocalCoord = glm::vec3( primitives[i].invTrans * glm::vec4( *source, 1.0f ) );
 
         if( primitives[i].type == 0 ) //sphere
         {
-            dst = raySphereIntersect( primitives+i, &sourceLocalCoord ,&rayLocalCoord );
+            dst = raySphereIntersect( primitives+i, source ,ray );
         }
         else
         {
-            dst = rayTriangleIntersect( primitives+i,  &sourceLocalCoord, &rayLocalCoord );
+            dst = rayTriangleIntersect( primitives+i,  source, ray);
 
         }
         if( FLOAT_INF == dst )
            continue;
 
-        tmpP = sourceLocalCoord + ( dst * rayLocalCoord );
+        tmpP = *source + ( dst * (*ray) );
 
         //transform the incident point and normal to world coordinate
         
         tmpN = getSurfaceNormal( &tmpP, primitives+i );
-        tmpN = glm::normalize( glm::transpose( glm::mat3( primitives[i].invTrans ) ) * (tmpN) );
-        tmpP = glm::vec3( (primitives[i].transform * glm::vec4( tmpP, 1.0f )) );
+        //tmpN = glm::normalize( glm::transpose( glm::mat3( primitives[i].invTrans ) ) * (tmpN) );
+        //tmpP = glm::vec3( (primitives[i].transform * glm::vec4( tmpP, 1.0f )) );
 
         if( glm::dot( tmpN, *ray ) > 0 ) //surface turnes away from the camera
             continue;
       
-        dst = glm::distance( tmpP, *source );
+        //dst = glm::distance( tmpP, *source );
 
         if( dst < nearest )
         {
@@ -154,6 +155,7 @@ __device__ int raytrace( const glm::vec3* const ray, const glm::vec3* const sour
             *point = tmpP;
             *surfaceNormal = tmpN;
         }
+        
     }
 
      return id;
@@ -163,8 +165,9 @@ __device__ int raytrace( const glm::vec3* const ray, const glm::vec3* const sour
 __device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primitive* const occluders, int occluderNum,
                              const _Light* const light )
 {
-    glm::vec3 L, LLocalFrame;
-    glm::vec3 PLocalFrame;
+    glm::vec3 L;
+    //, LLocalFrame;
+    //glm::vec3 PLocalFrame;
     glm::vec3 O;
     float lightDst, occluderDst;
     float shadowPct = 0;
@@ -190,7 +193,7 @@ __device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primiti
         //lightDst = glm::distance( *point, glm::vec3(light->pos) ); //distance in world coord
         L = glm::vec3(light->pos) - *point ;
         lightDst = glm::length( L );
-        LSample.x = LSample.y = 4;
+        LSample.x = LSample.y = 2;
     }
 
     if( glm::dot( *normal, L ) < 0 ) 
@@ -200,34 +203,37 @@ __device__ float shadowTest( glm::vec3* point, glm::vec3* normal, const _Primiti
 
     for( int y = 0; y < LSample.y; ++y ) for( int x = 0; x < LSample.x; ++x )
     {
+        L = glm::normalize(L);
         for( int i = 0; i < occluderNum; ++i )
         {
             //transform the light vector to object space and normalize it
-            LLocalFrame = glm::normalize( glm::mat3( occluders[i].invTrans ) * L ); 
+            //LLocalFrame = glm::normalize( glm::mat3( occluders[i].invTrans ) * L ); 
 
             //transform the test point to object space
-            PLocalFrame = glm::vec3( occluders[i].invTrans * glm::vec4( *point, 1.0f ) );
+            //PLocalFrame = glm::vec3( occluders[i].invTrans * glm::vec4( *point, 1.0f ) );
 
             if( occluders[i].type == 0 ) //sphere
             {
-                occluderDst = raySphereIntersect( occluders+i, &PLocalFrame ,&LLocalFrame );
+                occluderDst = raySphereIntersect( occluders+i, point ,&L );
             }
             else
             {
-                occluderDst = rayTriangleIntersect( occluders+i,  &PLocalFrame, &LLocalFrame );
+                occluderDst = rayTriangleIntersect( occluders+i,  point, &L );
 
             }
             if( FLOAT_INF == occluderDst )
                continue;
 
             //transform the occluder point to world frame
-            O = glm::vec3( occluders[i].transform * 
-                            glm::vec4( PLocalFrame + occluderDst *  LLocalFrame, 1 ) );
+            //O = glm::vec3( occluders[i].transform * 
+            //                glm::vec4( PLocalFrame + occluderDst *  LLocalFrame, 1 ) );
 
-            occluderDst = glm::distance( *point,  O );
+
+            //occluderDst = glm::distance( *point,  O );
             if( occluderDst < lightDst )
             {
                 shadowPct += delta;
+                break;
                 //return shadowPct;
             }
         
@@ -277,7 +283,7 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
     ray = glm::normalize( ray );
     raysource = cameraData.eyePos;
 
-    for( int depth = 0; depth < 5; ++depth )
+    for( int depth = 0; depth <3; ++depth )
     {
         color.x = color.y = color.z = 0.0f; //clear color vector for use in current iteration
         hitId = raytrace( &ray,&raysource, primitives, primitiveNum, lights, lightNum, &incidentP, &surfaceNormal );
@@ -287,7 +293,7 @@ __global__ void raycast( unsigned char* const outputImage, int width, int height
             shiftP = incidentP +  (0.001f * surfaceNormal);
             for( int i = 0; i < lightNum; ++i )
             {
-                shadowPct = shadowTest( &shiftP, &surfaceNormal, primitives, primitiveNum, lights+i );
+                shadowPct =  shadowTest( &shiftP, &surfaceNormal, primitives, primitiveNum, lights+i );
 
                 //sahding
                 //if( shadowPct ==0 )
@@ -320,7 +326,7 @@ void rayTracerKernelWrapper( unsigned char* const outputImage, int width, int he
                               const _Primitive* const primitives, int primitiveNum,
                               const _Light* const lights, int lightNum, _Material* mtl, int mtlNum )
 {
-    dim3 blockSize = dim3( 32, 32 );
+    dim3 blockSize = dim3( 16, 16);
     dim3 gridSize = dim3( (width + blockSize.x-1)/blockSize.x, (height + blockSize.y-1)/blockSize.y );
 
     //The ray tracing work is done in the kernel

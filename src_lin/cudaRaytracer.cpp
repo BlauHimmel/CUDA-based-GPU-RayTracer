@@ -47,6 +47,7 @@ void CudaRayTracer::renderImage( cudaGraphicsResource* pboResource )
                             d_primitives, numPrimitive, d_lights, numLight, d_materials, numMaterial );
     timer.Stop();
 
+    std::cout<<timer.Elapsed()<<std::endl;
     cudaErrorCheck( cudaGraphicsUnmapResources( 1, &pboResource, 0 ) );
 
 
@@ -73,7 +74,7 @@ void CudaRayTracer::packSceneDescData( const SceneDesc &sceneDesc )
     numPrimitive = sceneDesc.primitives.size();
     h_pPrimitives = new _Primitive[ numPrimitive ]; 
 
-    for( int i = 0; i < 65/*sceneDesc.primitives.size()*/; ++i )
+    for( int i = 0; i < sceneDesc.primitives.size(); ++i )
     {
         if( sceneDesc.primitives[i]->toString().compare("sphere") == 0 )
         {
@@ -86,15 +87,15 @@ void CudaRayTracer::packSceneDescData( const SceneDesc &sceneDesc )
             for( int n = 0; n < 3; ++n )
                 h_pPrimitives[i].vert[n]  =((Triangle*)sceneDesc.primitives[i])->v[n];
 
-            for( int n = 0; n < 3; ++n )
-                h_pPrimitives[i].normal[n] =((Triangle*)sceneDesc.primitives[i])->n[n];
+            //for( int n = 0; n < 3; ++n )
+            //    h_pPrimitives[i].normal[n] =((Triangle*)sceneDesc.primitives[i])->n[n];
 
             h_pPrimitives[i].pn = ((Triangle*)sceneDesc.primitives[i])->pn;
 
             h_pPrimitives[i].type = 1; //triangle type
         }
-        h_pPrimitives[i].transform = sceneDesc.primitives[i]->transform;
-        h_pPrimitives[i].invTrans = sceneDesc.primitives[i]->invTrans;
+        //h_pPrimitives[i].transform = sceneDesc.primitives[i]->transform;
+        //h_pPrimitives[i].invTrans = sceneDesc.primitives[i]->invTrans;
         h_pPrimitives[i].mtl_id = sceneDesc.primitives[i]->mtl_idx;
     }
 
@@ -168,6 +169,8 @@ void  CudaRayTracer::init( const SceneDesc &scene )
     if( scene.width < 1 || scene.height < 1 )
         return;
 
+    width = scene.width;
+    height = scene.height;
     //Pack scene description data
     packSceneDescData( scene );
 
