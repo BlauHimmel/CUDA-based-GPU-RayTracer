@@ -6,7 +6,6 @@ CudaRaytracer/Release/
 CudaRaytracer/Debug/
 log
 *.pdb
-*.obj
 *.sdf
 *.test
 *.ppm
