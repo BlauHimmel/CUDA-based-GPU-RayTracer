@@ -2,22 +2,23 @@
 This project implements a GPU raytracer using nVidia CUDA.  
   
 The following featues are implemented:
-1. Parallel Ray casting
-2. Ray-sphere and Ray-Triangle intersections 
-3. Phong reflection model
-4. Area lights and soft shadows  
- * Area lights are sampled in 4x4 grid resolutin; each sample ray is jitterd with randomness to decrease blocking effects.
- * cuRAND is used to generate the random values 
-5. mirror reflection  
- * An iterative approach is used to gather reflectance energy without the use of costly recursive approach is avoided.  
-  The default depth of reflection is 4.
-6. Wavefront obj model rendering
+
+* Parallel Ray casting
+* Ray-sphere and Ray-Triangle intersections 
+* Phong reflection model
+* Area lights and soft shadows
+  1. Area lights are sampled in 4x4 grid resolutin; each sample ray is jitterd with randomness to decrease blocking effects.  
+  2. cuRAND is used to generate the random values 
+* mirror reflection  
+  1. An iterative approach is used to gather reflectance energy without the use of costly recursive approach is avoided.  
+  2. The default depth of reflection is 4.
+* Wavefront obj model rendering
 
 #Rendering Snapshot
  * Recording of execution: http://www.youtube.com/watch?v=46AOCXCAYd8
  * 30-sec. rendered animation: http://www.youtube.com/watch?v=SMAJNEoWPoc
- * Snapshot of execution
- * Snapshot of rendered image
+ * Snapshot of execution: https://raw.github.com/otaku690/Project1-RayTracer/master/execute_snapshot.png
+ * Snapshot of rendered image: https://raw.github.com/otaku690/Project1-RayTracer/master/render_results.png
 
 #Performance evaluation
  setting: 1024x768 res., 4x4 shadow & lighting samples, 4 bounces of reflection
