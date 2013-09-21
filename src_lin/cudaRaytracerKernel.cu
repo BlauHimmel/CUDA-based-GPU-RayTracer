@@ -116,6 +116,11 @@ __device__ int raytrace( const glm::vec3* const ray, const glm::vec3* const sour
 
     for( int i = 0; i < primitiveNum; ++i )
     {
+        //if( threadId == 0 )
+        //{
+        //    s_primitive = primitives[i];
+        //}
+        //__syncthreads();
 
         if( primitives[i].type == 0 ) //sphere
         {
@@ -332,7 +337,7 @@ void rayTracerKernelWrapper( unsigned char* const outputImage, int width, int he
                               const _Primitive* const primitives, int primitiveNum,
                               const _Light* const lights, int lightNum, _Material* mtl, int mtlNum, int DOPsampleCount, curandState *state )
 {
-    dim3 blockSize = dim3( 8,8 );
+    dim3 blockSize = dim3(8,8);
     dim3 gridSize = dim3( (width + blockSize.x-1)/blockSize.x, (height + blockSize.y-1)/blockSize.y );
 
     //The ray tracing work is done in the kernel

@@ -115,8 +115,8 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>E:\Penn course\CIS565 GPU programming\freeglut-2.8.1\include;E:\Penn course\CIS565 GPU programming\glew-1.10.0-win32\glew-1.10.0\include;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v5.5\common\inc;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\Penn course\CIS565 GPU programming\glew-1.10.0-win32\glew-1.10.0\lib\Release\Win32;E:\Penn course\CIS565 GPU programming\freeglut-2.8.1\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Penn course\CIS565 GPU programming\freeglut-2.8.1\include;E:\Penn course\CIS565 GPU programming\glew-1.10.0-win32\glew-1.10.0\include;C:\ProgramData\NVIDIA Corporation\CUDA Samples\v5.5\common\inc;E:\Penn course\CIS565 GPU programming\FreeImage3154Win32\FreeImage\Dist;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Penn course\CIS565 GPU programming\glew-1.10.0-win32\glew-1.10.0\lib\Release\Win32;E:\Penn course\CIS565 GPU programming\freeglut-2.8.1\lib\x86;E:\Penn course\CIS565 GPU programming\FreeImage3154Win32\FreeImage\Dist;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -168,7 +168,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;glew32.lib;freeglut.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;glew32.lib;freeglut.lib;freeimage.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>echo copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"

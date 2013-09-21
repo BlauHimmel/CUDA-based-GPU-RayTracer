@@ -1,36 +1,40 @@
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#include <FreeImage.h>
 #include "cudaRaytracer.h"
 #include "SceneDesc.h"
 #include "FileParser.h"
-#include "ColorImage.h"
 #include "glRoutine.h"
 #include "variables.h"
+#define GLM_SWIZZLE
+#include "glm/glm.hpp"
 
 using namespace std;
+using namespace glm;
 
-
-
-const char* IOFILES[6][2] = {
-    "testScene.scene","testScene.ppm",
-    "testScene2.scene","testScene2.ppm", 
-    "testScene3.scene","testScene3.ppm",
-    "testScene4.scene","testScene4.ppm",
-    "testScene5.scene","testScene5.ppm" ,
-    "testScene6.scene","testScene6.ppm"
-};
 
 CudaRayTracer* cudaRayTracer = NULL;
 unsigned int win_w, win_h;
 
+SceneDesc theScene;
+
 int main( int argc, char* argv[] )
 {
-    SceneDesc theScene;
-    ColorImage outputImage;
-    FileParser::parse( IOFILES[0][0], theScene );
+    
+    FreeImage_Initialise();
 
-    outputImage.init( theScene.width, theScene.height );
+    if( argc == 1 )
+    {
+        cout<<"Usage: CudaRaytracer.exe [scene filename]\n";
+        system( "pause" );
+        return 1;
+    }
+
+    FileParser::parse( argv[1], theScene );
+
     win_w = theScene.width;
     win_h = theScene.height;
 
@@ -63,13 +67,34 @@ int main( int argc, char* argv[] )
     glutIdleFunc( glut_idle );
     glutMainLoop();
     
+    //float r = glm::distance( vec3( theScene.eyePos.x, 0, theScene.eyePos.z )
+    //                           , vec3( theScene.center.x, 0, theScene.center.z ) );
+    //float degree = 0;
+    //stringstream name;
 
-    //
-    //cudaRayTracer->renderImage( theScene, outputImage );
+    //FIBITMAP* bitmap = FreeImage_Allocate( theScene.width, theScene.height, 32 );
+    //for( int f = 0; f < 450; ++f ) //render 900 frame
+    //{
+    //    //compute the camera pos 
+    //    theScene.eyePos.x = theScene.center.x + r * sin( degree * 3.1415926/180.0f );
+    //    theScene.eyePos.z = theScene.center.z+ r*cos( degree * 3.1415926 / 180);
 
-    //outputImage.outputPPM( IOFILES[4][1] );
+    //    cudaRayTracer->updateCamera(theScene);
+    //    cudaRayTracer->renderImage( bitmap );
+
+    //    name.str("");
+    //    name<<"frames\\CUDA-based GPU Raytracer";
+    //    name<<f<<".png";
+    //    
+    //    //outputImage.outputPPM( name.str().c_str() ); 
+    //    FreeImage_Save( FIF_PNG, bitmap, name.str().c_str() );
+    //    degree += 1.25f;
+    //}
+    
+
     cleanUpGL();
     delete cudaRayTracer;
+    FreeImage_DeInitialise();
     return 0;
 }
 

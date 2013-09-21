@@ -2,7 +2,7 @@
 
 #include "raytracer.h"
 #include "sceneDesc.h"
-#include "ColorImage.h"
+#include <FreeImage.h>
 #include "util.h"
 #include <curand_kernel.h>
 
@@ -12,10 +12,12 @@ public:
     CudaRayTracer();
     ~CudaRayTracer();
     void renderImage( cudaGraphicsResource* pboResource );
+    void renderImage( FIBITMAP* outputImage );
     void init( const SceneDesc &scene );
     void registerPBO( unsigned int pbo );
     void unregisterPBO();
     void setupDevStates(); //for random number generation
+    void updateCamera( const SceneDesc &scene );
 private:
     void cleanUp();
     void packSceneDescData( const SceneDesc &sceneDesc );
