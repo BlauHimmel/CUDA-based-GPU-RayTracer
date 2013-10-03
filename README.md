@@ -16,7 +16,7 @@ The following featues are implemented:
 
 #Rendering Snapshot
  * Recording of execution: http://www.youtube.com/watch?v=46AOCXCAYd8
- * 30-sec. rendered animation: http://www.youtube.com/watch?v=SMAJNEoWPoc
+ * 30-sec. rendered animation: http://www.youtube.com/watch?v=ddbjBcigC7Q&feature=youtu.be
  * Snapshot of execution: https://raw.github.com/otaku690/Project1-RayTracer/master/execute_snapshot.png
  * Snapshot of rendered image: https://raw.github.com/otaku690/Project1-RayTracer/master/render_results.png
 
